@@ -88,35 +88,71 @@ public class SecurityConfig {
 
 
 
-    @Bean
+        @Bean
 
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        http
 
-            .cors(Customizer.withDefaults())
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-            .csrf(csrf -> csrf.disable())
 
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            .authorizeHttpRequests(auth -> auth
+            http
 
-                .requestMatchers("/api/auth/**").permitAll()
 
-                .requestMatchers("/ws-sudoku/**").permitAll()
 
-                .anyRequest().authenticated()
+                .cors(Customizer.withDefaults())
 
-            )
 
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
-        
+                .csrf(csrf -> csrf.disable())
 
-        return http.build();
 
-    }
+
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+
+
+                .authorizeHttpRequests(auth -> auth
+
+
+
+                    .requestMatchers("/api/auth/**", "/auth/**").permitAll()
+
+
+
+                    .requestMatchers("/ws-sudoku/**").permitAll()
+
+
+
+                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
+
+
+                    .anyRequest().authenticated()
+
+
+
+                )
+
+
+
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+
+
+
+            
+
+
+
+            return http.build();
+
+
+
+        }
+
+
+
+    
 
 
 
@@ -136,15 +172,27 @@ public class SecurityConfig {
 
 
 
-            // Autorise localhost pour le dev et une variable d'env pour la prod
-
-
-
             String prodOrigin = System.getenv("ALLOWED_ORIGIN");
 
 
 
             if (prodOrigin != null && !prodOrigin.isEmpty()) {
+
+
+
+                // Supprime le slash final s'il existe
+
+
+
+                if (prodOrigin.endsWith("/")) {
+
+
+
+                    prodOrigin = prodOrigin.substring(0, prodOrigin.length() - 1);
+
+
+
+                }
 
 
 
@@ -172,24 +220,38 @@ public class SecurityConfig {
 
 
 
+            configuration.setAllowedHeaders(Arrays.asList("*")); // Plus permissif pour le débug
+
+
+
+            configuration.setAllowCredentials(true);
+
+
+
+            configuration.setMaxAge(3600L);
+
+
+
+            
+
+
+
+            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+
+
+            source.registerCorsConfiguration("/**", configuration);
+
+
+
+            return source;
+
+
+
+        }
+
+
+
     
-
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
-
-        configuration.setExposedHeaders(List.of("Authorization"));
-
-        configuration.setAllowCredentials(true);
-
-        configuration.setMaxAge(3600L);
-
-        
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-
-        source.registerCorsConfiguration("/**", configuration);
-
-        return source;
-
-    }
 
 }
