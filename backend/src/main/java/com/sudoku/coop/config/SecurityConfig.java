@@ -112,27 +112,35 @@ public class SecurityConfig {
 
 
 
-                .authorizeHttpRequests(auth -> auth
+                            .authorizeHttpRequests(auth -> auth
 
 
 
-                    .requestMatchers("/api/auth/**", "/auth/**").permitAll()
+                                .requestMatchers("/api/auth/**", "/auth/**").permitAll()
 
 
 
-                    .requestMatchers("/ws-sudoku/**").permitAll()
+                                .requestMatchers("/api/game/ping", "/game/ping").permitAll()
 
 
 
-                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                                .requestMatchers("/ws-sudoku/**", "/ws-sudoku").permitAll()
 
 
 
-                    .anyRequest().authenticated()
+                                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
 
 
-                )
+                                .anyRequest().authenticated()
+
+
+
+                            )
+
+
+
+                
 
 
 

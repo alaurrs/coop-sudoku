@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/social")
+@RequestMapping({"/api/social", "/social"})
 public class SocialController {
     private final SocialService socialService;
 
