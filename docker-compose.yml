@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: sudoku-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: sudoku_user
+      POSTGRES_PASSWORD: sudoku_password
+      POSTGRES_DB: sudoku_coop
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - sudoku_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: sudoku-backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:postgresql://db:5432/sudoku_coop
+      - DB_USERNAME=sudoku_user
+      - DB_PASSWORD=sudoku_password
+      - JWT_SECRET=YOUR_PROD_JWT_SECRET_CHANGE_ME
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    container_name: sudoku-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  sudoku_data:

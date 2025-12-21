@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://db:5432/sudoku_coop}
+    username: ${DB_USERNAME:sudoku_user}
+    password: ${DB_PASSWORD:sudoku_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update # Set to validate in strict production
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+
+# Ensure HTTPS is used for sensitive cookies if any (though using JWT)
+server:
+  forward-headers-strategy: native

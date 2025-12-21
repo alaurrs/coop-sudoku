@@ -1,0 +1,25 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend
+collaborative-sudoku/frontend/node_modules/
+collaborative-sudoku/frontend/dist/
+collaborative-sudoku/frontend/.angular/
+collaborative-sudoku/frontend/coverage/
+
+# Backend
+collaborative-sudoku/backend/target/
+collaborative-sudoku/backend/.mvn/
+collaborative-sudoku/backend/mvnw
+collaborative-sudoku/backend/mvnw.cmd
+collaborative-sudoku/backend/src/main/resources/application-local.yml
+
+# Docker
+.env
