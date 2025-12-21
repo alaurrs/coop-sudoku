@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { RxStomp, RxStompState } from '@stomp/rx-stomp';
-import { Observable, Subject, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { GameEvent } from '../models/game.models';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -17,13 +16,23 @@ export class WebSocketService {
     this.rxStomp = new RxStomp();
     
     let wsUrl = environment.wsUrl;
+    
+    // Si l'URL est relative (ex: /ws-sudoku)
     if (wsUrl.startsWith('/')) {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
       wsUrl = `${protocol}//${host}${wsUrl}/websocket`;
-    } else if (wsUrl.startsWith('http')) {
-      wsUrl = wsUrl.replace('http', 'ws') + '/websocket';
+    } 
+    // Si l'URL est absolue mais commence par http
+    else if (wsUrl.startsWith('http')) {
+      wsUrl = wsUrl.replace(/^http/, 'ws') + '/websocket';
     }
+    // Si l'URL est déjà en wss://, on s'assure qu'elle finit par /websocket (requis par Spring pour STOMP raw)
+    else if (wsUrl.startsWith('ws') && !wsUrl.endsWith('/websocket')) {
+      wsUrl = wsUrl + '/websocket';
+    }
+
+    console.log('WebSocket: Connecting to', wsUrl);
 
     this.rxStomp.configure({
       brokerURL: wsUrl,
@@ -33,6 +42,7 @@ export class WebSocketService {
     });
 
     this.rxStomp.connectionState$.subscribe(state => {
+      console.log('WebSocket: State changed to', RxStompState[state]);
       this.connectionState$.next(state);
     });
 

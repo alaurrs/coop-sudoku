@@ -88,55 +88,63 @@ public class SecurityConfig {
 
 
 
-        @Bean
+            @Bean
 
 
 
-        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+            public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
 
 
-            http
+                http
 
 
 
-                .cors(Customizer.withDefaults())
+                    .cors(Customizer.withDefaults())
 
 
 
-                .csrf(csrf -> csrf.disable())
+                    .csrf(csrf -> csrf.disable())
 
 
 
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                    .headers(headers -> headers.frameOptions(frame -> frame.disable()))
 
 
 
-                            .authorizeHttpRequests(auth -> auth
+                    .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
 
 
-                                .requestMatchers("/api/auth/**", "/auth/**").permitAll()
+                    .authorizeHttpRequests(auth -> auth
 
 
 
-                                .requestMatchers("/api/game/ping", "/game/ping").permitAll()
+                        .requestMatchers("/api/auth/**", "/auth/**").permitAll()
 
 
 
-                                .requestMatchers("/ws-sudoku/**", "/ws-sudoku").permitAll()
+                        .requestMatchers("/api/game/ping", "/game/ping").permitAll()
 
 
 
-                                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/ws-sudoku/**", "/ws-sudoku").permitAll()
 
 
 
-                                .anyRequest().authenticated()
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
 
 
-                            )
+                        .anyRequest().authenticated()
+
+
+
+                    )
+
+
+
+                    .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
 
 
@@ -144,19 +152,15 @@ public class SecurityConfig {
 
 
 
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                return http.build();
 
 
 
-            
+            }
 
 
 
-            return http.build();
-
-
-
-        }
+        
 
 
 

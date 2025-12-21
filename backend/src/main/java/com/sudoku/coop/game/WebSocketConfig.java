@@ -18,12 +18,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // Un seul endpoint propre, autorisant toutes les origines
         registry.addEndpoint("/ws-sudoku")
                 .setAllowedOriginPatterns("*");
-        
-        // Add a second endpoint with SockJS support just in case
-        registry.addEndpoint("/ws-sudoku")
-                .setAllowedOriginPatterns("*")
-                .withSockJS();
     }
 }
