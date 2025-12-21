@@ -17,28 +17,34 @@ export class WebSocketService {
     
     let wsUrl = environment.wsUrl;
     
-    // Si l'URL est relative (ex: /ws-sudoku)
+    // Construction de l'URL pour Spring STOMP raw (nécessite le suffixe /websocket)
     if (wsUrl.startsWith('/')) {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
       wsUrl = `${protocol}//${host}${wsUrl}/websocket`;
     } 
-    // Si l'URL est absolue mais commence par http
-    else if (wsUrl.startsWith('http')) {
-      wsUrl = wsUrl.replace(/^http/, 'ws') + '/websocket';
-    }
-    // Si l'URL est déjà en wss://, on s'assure qu'elle finit par /websocket (requis par Spring pour STOMP raw)
-    else if (wsUrl.startsWith('ws') && !wsUrl.endsWith('/websocket')) {
-      wsUrl = wsUrl + '/websocket';
+    else {
+      // S'assurer que le protocole est ws/wss
+      wsUrl = wsUrl.replace(/^http/, 'ws');
+      // S'assurer du suffixe /websocket
+      if (!wsUrl.endsWith('/websocket')) {
+        wsUrl = wsUrl.replace(/\/$/, '') + '/websocket';
+      }
     }
 
-    console.log('WebSocket: Connecting to', wsUrl);
+    console.log('WebSocket: Attempting connection to', wsUrl);
 
     this.rxStomp.configure({
       brokerURL: wsUrl,
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
+      // Debug pour voir les erreurs de handshake
+      debug: (msg: string) => {
+        if (msg.includes('ERROR') || msg.includes('Lost connection')) {
+          console.error('STOMP Error:', msg);
+        }
+      }
     });
 
     this.rxStomp.connectionState$.subscribe(state => {

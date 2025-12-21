@@ -120,19 +120,23 @@ public class SecurityConfig {
 
 
 
-                        .requestMatchers("/api/auth/**", "/auth/**").permitAll()
+                                        .requestMatchers("/api/auth/**", "/auth/**").permitAll()
 
 
 
-                        .requestMatchers("/api/game/ping", "/game/ping").permitAll()
+                                        .requestMatchers("/api/game/ping", "/game/ping").permitAll()
 
 
 
-                        .requestMatchers("/ws-sudoku/**", "/ws-sudoku").permitAll()
+                                        .requestMatchers("/ws-sudoku/**", "/ws-sudoku", "/api/ws-sudoku/**", "/api/ws-sudoku").permitAll()
 
 
 
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+
+
+
+                        
 
 
 
