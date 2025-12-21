@@ -22,11 +22,17 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - DB_URL=jdbc:postgresql://db:5432/sudoku_coop
-      - DB_USERNAME=sudoku_user
-      - DB_PASSWORD=sudoku_password
-      - JWT_SECRET=YOUR_PROD_JWT_SECRET_CHANGE_ME
+      - DB_USERNAME=${DB_USERNAME:-sudoku_user}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
+      - JAVA_OPTS=-Xmx512m -Xms256m
     depends_on:
       - db
+    deploy:
+      resources:
+        limits:
+          memory: 768M
 
   frontend:
     build: ./frontend

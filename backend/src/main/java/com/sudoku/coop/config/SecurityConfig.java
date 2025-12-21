@@ -120,15 +120,59 @@ public class SecurityConfig {
 
 
 
-    @Bean
+        @Bean
 
-    public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        public CorsConfigurationSource corsConfigurationSource() {
 
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+
+
+            CorsConfiguration configuration = new CorsConfiguration();
+
+
+
+            
+
+
+
+            // Autorise localhost pour le dev et une variable d'env pour la prod
+
+
+
+            String prodOrigin = System.getenv("ALLOWED_ORIGIN");
+
+
+
+            if (prodOrigin != null && !prodOrigin.isEmpty()) {
+
+
+
+                configuration.setAllowedOrigins(List.of("http://localhost:4200", prodOrigin));
+
+
+
+            } else {
+
+
+
+                configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+
+
+
+            }
+
+
+
+    
+
+
+
+            configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+
+
+
+    
 
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"));
 
