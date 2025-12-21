@@ -17,15 +17,18 @@ public class GameService {
     private final SimpMessagingTemplate messagingTemplate;
     private final GameRepository gameRepository;
     private final UserRepository userRepository;
+    private final SocialService socialService;
     
     private final Map<String, Suggestion> activeSuggestions = new ConcurrentHashMap<>();
 
     public GameService(SudokuGenerator generator, SimpMessagingTemplate messagingTemplate, 
-                       GameRepository gameRepository, UserRepository userRepository) {
+                       GameRepository gameRepository, UserRepository userRepository,
+                       SocialService socialService) {
         this.generator = generator;
         this.messagingTemplate = messagingTemplate;
         this.gameRepository = gameRepository;
         this.userRepository = userRepository;
+        this.socialService = socialService;
     }
 
     public List<GameSummary> getAvailableGames() {
@@ -60,6 +63,7 @@ public class GameService {
         GameEntity entity = new GameEntity(roomCode, userId, grid.puzzle(), grid.solution(), difficulty.toUpperCase());
         gameRepository.save(entity);
         
+        broadcastLobbyUpdate();
         return mapToSession(entity);
     }
 
@@ -74,6 +78,7 @@ public class GameService {
         if (!entity.getHostId().equals(userId) && entity.getPlayer2Id() == null) {
             entity.setPlayer2Id(userId);
             gameRepository.save(entity);
+            broadcastLobbyUpdate();
         }
         
         GameSession session = mapToSession(entity);
@@ -84,6 +89,7 @@ public class GameService {
                 gameRepository.save(entity);
                 session.setState(GameState.IN_PROGRESS);
                 broadcast(roomCode, "GAME_START", session);
+                broadcastLobbyUpdate();
             } else {
                 broadcast(roomCode, "PLAYER_JOINED", session);
             }
@@ -99,6 +105,7 @@ public class GameService {
         entity.setState(GameState.IN_PROGRESS);
         gameRepository.save(entity);
         broadcast(roomCode, "GAME_START", mapToSession(entity));
+        broadcastLobbyUpdate();
     }
 
     public void suggestMove(String roomCode, String userId, int row, int col, int value) {
@@ -110,7 +117,9 @@ public class GameService {
         if (isSolo) {
             applyMove(entity, row, col, value);
         } else {
-            var suggestion = new Suggestion(userId, row, col, value);
+            String username = resolveUsername(userId);
+            String avatar = resolveAvatar(userId);
+            var suggestion = new Suggestion(userId, username, avatar, row, col, value);
             activeSuggestions.put(roomCode, suggestion);
             broadcast(roomCode, "SUGGEST_MOVE", suggestion);
         }
@@ -140,6 +149,7 @@ public class GameService {
         entity.setState(GameState.COMPLETED);
         gameRepository.save(entity);
         broadcast(roomCode, "GAME_SURRENDERED", userId);
+        broadcastLobbyUpdate();
     }
 
     private void applyMove(GameEntity entity, int row, int col, int value) {
@@ -153,6 +163,7 @@ public class GameService {
         
         if (isCorrect && Arrays.deepEquals(current, solution)) {
             entity.setState(GameState.COMPLETED);
+            broadcastLobbyUpdate();
         }
         
         gameRepository.save(entity);
@@ -167,20 +178,28 @@ public class GameService {
     }
 
     private GameSession mapToSession(GameEntity entity) {
-        String hostName = resolveUsername(entity.getHostId());
+        GameSession.PlayerInfo host = new GameSession.PlayerInfo(
+            entity.getHostId(),
+            resolveUsername(entity.getHostId()),
+            resolveAvatar(entity.getHostId())
+        );
             
         GameSession session = new GameSession(
             entity.getRoomCode(),
             entity.getCurrentGridArray(),
             entity.getSolutionGridArray(),
-            hostName,
+            host,
             entity.getState(),
             entity.getCreatedAt().toEpochMilli(),
             entity.getDifficulty()
         );
         
         if (entity.getPlayer2Id() != null) {
-            session.addPlayerName(resolveUsername(entity.getPlayer2Id()));
+            session.addPlayer(new GameSession.PlayerInfo(
+                entity.getPlayer2Id(),
+                resolveUsername(entity.getPlayer2Id()),
+                resolveAvatar(entity.getPlayer2Id())
+            ));
         }
         
         session.setPendingSuggestion(activeSuggestions.get(entity.getRoomCode()));
@@ -191,12 +210,18 @@ public class GameService {
         if (userId == null) return "Unknown";
         return userRepository.findById(userId)
             .map(UserEntity::getUsername)
-            .orElseGet(() -> {
-                // Fallback: search by username if ID lookup failed (handling legacy/buggy data)
-                return userRepository.findByUsername(userId)
-                    .map(UserEntity::getUsername)
-                    .orElse("User_" + userId.substring(0, 4));
-            });
+            .orElse("Unknown");
+    }
+
+    private String resolveAvatar(String userId) {
+        if (userId == null) return "guest";
+        return userRepository.findById(userId)
+            .map(UserEntity::getAvatar)
+            .orElse("guest");
+    }
+
+    private void broadcastLobbyUpdate() {
+        messagingTemplate.convertAndSend("/topic/lobby", getAvailableGames());
     }
 
     private void broadcast(String roomCode, String type, Object payload) {

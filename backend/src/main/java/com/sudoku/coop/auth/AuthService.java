@@ -23,16 +23,17 @@ public class AuthService {
         this.socialService = socialService;
     }
 
-    public record AuthResponse(String token, String userId, String username) {}
+    public record AuthResponse(String token, String userId, String username, String avatar) {}
 
-    public AuthResponse register(String username, String password) {
+    public AuthResponse register(String username, String password, String avatar) {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Username already taken");
         }
         UserEntity user = new UserEntity(username, passwordEncoder.encode(password), false);
+        user.setAvatar(avatar);
         userRepository.save(user);
         socialService.updateActivity(user.getId());
-        return new AuthResponse(jwtService.generateToken(user.getId(), user.getUsername()), user.getId(), user.getUsername());
+        return mapToResponse(user);
     }
 
     public AuthResponse login(String username, String password) {
@@ -43,7 +44,7 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid credentials");
         }
         socialService.updateActivity(user.getId());
-        return new AuthResponse(jwtService.generateToken(user.getId(), user.getUsername()), user.getId(), user.getUsername());
+        return mapToResponse(user);
     }
 
     public AuthResponse loginAsGuest(String requestedName) {
@@ -51,14 +52,76 @@ public class AuthService {
             ? "Guest_" + UUID.randomUUID().toString().substring(0, 4) 
             : requestedName;
             
-        // Check conflicts if user provided a name
         if (userRepository.findByUsername(name).isPresent()) {
              name = name + "_" + UUID.randomUUID().toString().substring(0, 4);
         }
 
         UserEntity user = new UserEntity(name, null, true);
+        // Default avatar for guests
+        user.setAvatar("guest");
         userRepository.save(user);
         socialService.updateActivity(user.getId());
-        return new AuthResponse(jwtService.generateToken(user.getId(), user.getUsername()), user.getId(), user.getUsername());
+        return mapToResponse(user);
     }
-}
+
+        private AuthResponse mapToResponse(UserEntity user) {
+
+            String token = jwtService.generateToken(user.getId(), user.getUsername());
+
+            return new AuthResponse(token, user.getId(), user.getUsername(), user.getAvatar());
+
+        }
+
+    
+
+            public AuthResponse updateAvatar(String userId, String avatar) {
+
+    
+
+                UserEntity user = userRepository.findById(userId)
+
+    
+
+                        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+    
+
+                user.setAvatar(avatar);
+
+    
+
+                userRepository.save(user);
+
+    
+
+                
+
+    
+
+                // Notify all friends that they need to refresh their list
+
+    
+
+                socialService.notifyFriendsOfUpdate(userId);
+
+    
+
+                
+
+    
+
+                return mapToResponse(user);
+
+    
+
+            }
+
+    
+
+        }
+
+    
+
+        
+
+    

@@ -91,18 +91,13 @@ export class LandingComponent {
   public themeService = inject(ThemeService);
 
   playAsGuest() {
-    // If already logged in, go to lobby
     if (this.auth.isAuthenticated()) {
         this.router.navigate(['/lobby']);
         return;
     }
     
-    // Otherwise prompt generic guest name and go
-    const name = `Guest_${Math.floor(Math.random() * 1000)}`;
+    const randomId = Math.floor(1000 + Math.random() * 9000);
+    const name = `Guest${randomId}`;
     this.auth.guestLogin(name);
-    // AuthStore handles redirection or we do it here?
-    // Let's assume auth store just sets state. We redirect.
-    // Ideally we wait for the observable but for prototype speed:
-    setTimeout(() => this.router.navigate(['/lobby']), 200); 
   }
 }

@@ -2,16 +2,18 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { WebSocketService } from '../services/web-socket.service';
-import { GameSession, Suggestion, GameSummary } from '../models/game.models';
+import { GameSession, PlayerInfo, Suggestion, GameSummary, GameEvent } from '../models/game.models';
 import { ChatMessage } from '../models/chat.models';
 import { environment } from '../../environments/environment';
+import { Subscription } from 'rxjs';
 
 export interface GameState {
   roomId: string | null;
   grid: number[][]; 
-  players: string[];
+  players: PlayerInfo[];
   currentUserId: string | null;
   currentUsername: string | null;
+  currentUserAvatar: string | null;
   status: 'WAITING' | 'IN_PROGRESS' | 'COMPLETED';
   pendingSuggestion: Suggestion | null;
   selectedCell: { r: number, c: number } | null;
@@ -30,6 +32,7 @@ const INITIAL_STATE: GameState = {
   players: [],
   currentUserId: null,
   currentUsername: null,
+  currentUserAvatar: null,
   status: 'WAITING',
   pendingSuggestion: null,
   selectedCell: null,
@@ -51,6 +54,8 @@ export class GameStore {
   private http = inject(HttpClient);
   
   private state = signal<GameState>(INITIAL_STATE);
+  private gameSub: Subscription | null = null;
+  private lobbySub: Subscription | null = null;
 
   // Selectors
   readonly roomId = computed(() => this.state().roomId);
@@ -59,6 +64,7 @@ export class GameStore {
   readonly players = computed(() => this.state().players);
   readonly currentUser = computed(() => this.state().currentUsername);
   readonly currentUserId = computed(() => this.state().currentUserId);
+  readonly userAvatar = computed(() => this.state().currentUserAvatar);
   readonly selectedCell = computed(() => this.state().selectedCell);
   readonly pendingSuggestion = computed(() => this.state().pendingSuggestion);
   readonly chatMessages = computed(() => this.state().chatMessages);
@@ -79,36 +85,13 @@ export class GameStore {
   });
 
   constructor() {
-    this.ws.gameEvents$.subscribe(event => {
-      console.log('Store: Received Event', event.type, event.payload);
-      switch (event.type) {
-        case 'GAME_START':
-        case 'PLAYER_JOINED':
-          this.updateGameSession(event.payload);
-          break;
-        case 'SUGGEST_MOVE':
-          this.state.update(s => ({ ...s, pendingSuggestion: event.payload }));
-          break;
-        case 'CONFIRM_MOVE':
-          this.handleMoveConfirmed(event.payload);
-          break;
-        case 'REJECT_MOVE':
-          this.state.update(s => ({ ...s, pendingSuggestion: null }));
-          break;
-        case 'GAME_CHAT':
-          this.state.update(s => ({
-             ...s,
-             chatMessages: [...s.chatMessages, event.payload]
-          }));
-          break;
-        case 'GAME_SURRENDERED':
-          this.state.update(s => ({
-             ...s,
-             status: 'COMPLETED',
-             endReason: 'SURRENDERED'
-          }));
-          break;
-      }
+    this.subscribeToLobby();
+  }
+
+  private subscribeToLobby() {
+    if (this.lobbySub) return;
+    this.lobbySub = this.ws.watchTopic('/topic/lobby').subscribe(lobbies => {
+      this.state.update(s => ({ ...s, activeLobbies: lobbies }));
     });
   }
 
@@ -121,9 +104,12 @@ export class GameStore {
     });
   }
 
-  initGame(session: GameSession, user: {id: string, username: string}) {
-    console.log('Store: initGame START', session.roomId);
-    this.ws.connectToGame(session.roomId);
+  initGame(session: GameSession, user: {id: string, username: string, avatar: string}) {
+    if (this.gameSub) this.gameSub.unsubscribe();
+    
+    this.gameSub = this.ws.watchTopic(`/topic/game/${session.roomId}`).subscribe((event: GameEvent) => {
+      this.handleGameEvent(event);
+    });
     
     this.state.update(s => ({
       ...s,
@@ -133,11 +119,46 @@ export class GameStore {
       status: session.state,
       currentUserId: user.id,
       currentUsername: user.username,
+      currentUserAvatar: user.avatar,
       startTime: session.startTime,
-      difficulty: session.difficulty
+      difficulty: session.difficulty,
+      pendingSuggestion: null,
+      chatMessages: []
     }));
 
     this.router.navigate(['/game']);
+  }
+
+  private handleGameEvent(event: GameEvent) {
+    console.log('Store: Received Event', event.type, event.payload);
+    switch (event.type) {
+      case 'GAME_START':
+      case 'PLAYER_JOINED':
+        this.updateGameSession(event.payload);
+        break;
+      case 'SUGGEST_MOVE':
+        this.state.update(s => ({ ...s, pendingSuggestion: event.payload }));
+        break;
+      case 'CONFIRM_MOVE':
+        this.handleMoveConfirmed(event.payload);
+        break;
+      case 'REJECT_MOVE':
+        this.state.update(s => ({ ...s, pendingSuggestion: null }));
+        break;
+      case 'GAME_CHAT':
+        this.state.update(s => ({
+           ...s,
+           chatMessages: [...s.chatMessages, event.payload]
+        }));
+        break;
+      case 'GAME_SURRENDERED':
+        this.state.update(s => ({
+           ...s,
+           status: 'COMPLETED',
+           endReason: 'SURRENDERED'
+        }));
+        break;
+    }
   }
 
   selectCell(r: number, c: number) {
@@ -183,17 +204,21 @@ export class GameStore {
     const s = this.state();
     if (!s.roomId || !s.currentUserId) return;
     
-    console.log('Store: Surrendering Game', s.roomId);
     this.http.post(`${environment.apiUrl}/game/${s.roomId}/surrender?userId=${s.currentUserId}`, {}).subscribe({
         error: (err) => console.error('Surrender failed', err)
     });
   }
 
   resetGame() {
+    if (this.gameSub) {
+      this.gameSub.unsubscribe();
+      this.gameSub = null;
+    }
     this.state.update(s => ({
       ...INITIAL_STATE,
       currentUserId: s.currentUserId,
       currentUsername: s.currentUsername,
+      currentUserAvatar: s.currentUserAvatar,
       activeLobbies: s.activeLobbies
     }));
     this.router.navigate(['/lobby']);

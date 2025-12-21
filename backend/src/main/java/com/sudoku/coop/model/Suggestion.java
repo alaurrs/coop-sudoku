@@ -1,3 +1,3 @@
 package com.sudoku.coop.model;
 
-public record Suggestion(String suggesterId, int row, int col, int value) {}
+public record Suggestion(String suggesterId, String suggesterName, String suggesterAvatar, int row, int col, int value) {}

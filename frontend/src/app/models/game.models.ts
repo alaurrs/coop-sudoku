@@ -2,10 +2,16 @@ export interface GameSession {
   roomId: string;
   currentGrid: number[][];
   solution: number[][];
-  players: string[];
+  players: PlayerInfo[];
   state: 'WAITING' | 'IN_PROGRESS' | 'COMPLETED';
   startTime: number;
   difficulty: string;
+}
+
+export interface PlayerInfo {
+  id: string;
+  username: string;
+  avatar: string;
 }
 
 export interface GameSummary {
@@ -19,6 +25,8 @@ export interface GameSummary {
 
 export interface Suggestion {
   suggesterId: string;
+  suggesterName: string;
+  suggesterAvatar: string;
   row: number;
   col: number;
   value: number;

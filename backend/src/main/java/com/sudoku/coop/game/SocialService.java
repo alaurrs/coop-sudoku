@@ -3,6 +3,7 @@ package com.sudoku.coop.game;
 import com.sudoku.coop.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -15,20 +16,23 @@ public class SocialService {
     private final FriendRequestRepository friendRequestRepository;
     private final GameInvitationRepository invitationRepository;
     private final GameRepository gameRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public SocialService(UserRepository userRepository, 
                          FriendshipRepository friendshipRepository, 
                          FriendRequestRepository friendRequestRepository,
                          GameInvitationRepository invitationRepository, 
-                         GameRepository gameRepository) {
+                         GameRepository gameRepository,
+                         SimpMessagingTemplate messagingTemplate) {
         this.userRepository = userRepository;
         this.friendshipRepository = friendshipRepository;
         this.friendRequestRepository = friendRequestRepository;
         this.invitationRepository = invitationRepository;
         this.gameRepository = gameRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
-    public record FriendInfo(String id, String username, String status) {}
+    public record FriendInfo(String id, String username, String avatar, String status) {}
     public record InviteInfo(Long id, String inviterName, String roomCode) {}
     public record FriendRequestInfo(Long id, String senderName, String status) {}
 
@@ -52,7 +56,7 @@ public class SocialService {
                 if (u.getLastSeenAt() != null && u.getLastSeenAt().isAfter(Instant.now().minusSeconds(300))) {
                     status = gameRepository.findActiveGameByUserId(u.getId()).isPresent() ? "In a game" : "Online";
                 }
-                return new FriendInfo(u.getId(), u.getUsername(), status);
+                return new FriendInfo(u.getId(), u.getUsername(), u.getAvatar(), status);
             })
             .collect(Collectors.toList());
     }
@@ -66,23 +70,22 @@ public class SocialService {
             throw new IllegalArgumentException("Cannot invite yourself");
         }
 
-        // Check if already friends
         if (friendshipRepository.findByUserIdAndFriendId(userId, receiver.getId()).isPresent()) {
             throw new IllegalArgumentException("Already friends");
         }
 
-        // Check if a request already exists
         Optional<FriendRequestEntity> existing = friendRequestRepository.findBySenderIdAndReceiverId(userId, receiver.getId());
         if (existing.isPresent()) {
             FriendRequestEntity req = existing.get();
             if (req.getStatus().equals("PENDING")) {
                 throw new IllegalArgumentException("Request already pending");
             }
-            // If REJECTED, we can allow resending (reset to PENDING)
             req.setStatus("PENDING");
             friendRequestRepository.save(req);
+            broadcastToUser(receiver.getId(), "FRIEND_REQUEST", new FriendRequestInfo(req.getId(), resolveUsername(userId), "PENDING"));
         } else {
-            friendRequestRepository.save(new FriendRequestEntity(userId, receiver.getId()));
+            FriendRequestEntity req = friendRequestRepository.save(new FriendRequestEntity(userId, receiver.getId()));
+            broadcastToUser(receiver.getId(), "FRIEND_REQUEST", new FriendRequestInfo(req.getId(), resolveUsername(userId), "PENDING"));
         }
     }
 
@@ -93,7 +96,6 @@ public class SocialService {
         
         if (accept) {
             request.setStatus("ACCEPTED");
-            // Create bidirectional friendship
             if (friendshipRepository.findByUserIdAndFriendId(request.getSenderId(), request.getReceiverId()).isEmpty()) {
                 friendshipRepository.save(new FriendshipEntity(request.getSenderId(), request.getReceiverId()));
                 friendshipRepository.save(new FriendshipEntity(request.getReceiverId(), request.getSenderId()));
@@ -102,6 +104,7 @@ public class SocialService {
             request.setStatus("REJECTED");
         }
         friendRequestRepository.save(request);
+        broadcastToUser(request.getSenderId(), "FRIEND_REQUEST_RESPONSE", request.getStatus());
     }
 
     public List<FriendRequestInfo> getPendingFriendRequests(String userId) {
@@ -132,9 +135,9 @@ public class SocialService {
                     .filter(r -> r.getReceiverId().equals(u.getId()))
                     .findFirst();
                 if (req.isPresent()) {
-                    status = req.get().getStatus(); // PENDING or REJECTED
+                    status = req.get().getStatus();
                 }
-                return new FriendInfo(u.getId(), u.getUsername(), status);
+                return new FriendInfo(u.getId(), u.getUsername(), u.getAvatar(), status);
             })
             .collect(Collectors.toList());
     }
@@ -143,7 +146,6 @@ public class SocialService {
     public void removeFriend(String userId, String friendId) {
         friendshipRepository.deleteByUserIdAndFriendId(userId, friendId);
         friendshipRepository.deleteByUserIdAndFriendId(friendId, userId);
-        // Also remove any existing requests between them to allow fresh start
         friendRequestRepository.findBySenderIdAndReceiverId(userId, friendId).ifPresent(friendRequestRepository::delete);
         friendRequestRepository.findBySenderIdAndReceiverId(friendId, userId).ifPresent(friendRequestRepository::delete);
     }
@@ -164,6 +166,8 @@ public class SocialService {
         
         GameInvitationEntity invitation = new GameInvitationEntity(inviterId, invitee.getId(), roomCode);
         invitationRepository.save(invitation);
+        
+        broadcastToUser(invitee.getId(), "GAME_INVITE", new InviteInfo(invitation.getId(), resolveUsername(inviterId), roomCode));
     }
 
     public void respondToInvite(Long inviteId, boolean accept) {
@@ -172,5 +176,30 @@ public class SocialService {
         
         invitation.setStatus(accept ? "ACCEPTED" : "REJECTED");
         invitationRepository.save(invitation);
+        broadcastToUser(invitation.getInviterId(), "INVITE_RESPONSE", invitation.getStatus());
+    }
+
+    public String findUsernameById(String userId) {
+        return userRepository.findById(userId).map(UserEntity::getUsername).orElse("Unknown");
+    }
+
+    public String findAvatarById(String userId) {
+        return userRepository.findById(userId).map(UserEntity::getAvatar).orElse("guest");
+    }
+
+    public void notifyFriendsOfUpdate(String userId) {
+        List<FriendshipEntity> friendships = friendshipRepository.findByUserId(userId);
+        System.out.println("SocialService: Notifying " + friendships.size() + " friends of user " + userId + " about profile update");
+        for (FriendshipEntity f : friendships) {
+            broadcastToUser(f.getFriendId(), "FRIEND_PROFILE_UPDATED", userId);
+        }
+    }
+
+    private String resolveUsername(String userId) {
+        return userRepository.findById(userId).map(UserEntity::getUsername).orElse("Unknown");
+    }
+
+    private void broadcastToUser(String userId, String type, Object payload) {
+        messagingTemplate.convertAndSend("/topic/user/" + userId, new GameEvent(type, payload));
     }
 }

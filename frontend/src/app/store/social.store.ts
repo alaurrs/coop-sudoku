@@ -1,12 +1,15 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { AuthStore } from '../auth/auth.store';
-import { Observable, of } from 'rxjs';
+import { WebSocketService } from '../services/web-socket.service';
+import { Observable, of, Subscription } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { GameEvent } from '../models/game.models';
 
 export interface Friend {
   id: string;
   username: string;
+  avatar: string;
   status: string;
 }
 
@@ -28,14 +31,66 @@ export interface FriendRequest {
 export class SocialStore {
   private http = inject(HttpClient);
   private auth = inject(AuthStore);
+  private ws = inject(WebSocketService);
 
   private _friends = signal<Friend[]>([]);
   private _gameInvites = signal<GameInvite[]>([]);
   private _friendRequests = signal<FriendRequest[]>([]);
+  private userSub: Subscription | null = null;
 
   readonly friends = computed(() => this._friends());
   readonly invites = computed(() => this._gameInvites()); 
   readonly friendRequests = computed(() => this._friendRequests());
+
+  constructor() {
+    // Automatically manage WS subscription based on auth state
+    effect(() => {
+      const user = this.auth.user();
+      if (user) {
+        this.subscribeToUserUpdates(user.id);
+        this.loadSocialData();
+      } else {
+        this.unsubscribeFromUserUpdates();
+        this._friends.set([]);
+        this._gameInvites.set([]);
+        this._friendRequests.set([]);
+      }
+    });
+  }
+
+  private subscribeToUserUpdates(userId: string) {
+    if (this.userSub) this.userSub.unsubscribe();
+    this.userSub = this.ws.watchTopic(`/topic/user/${userId}`).subscribe((event: GameEvent) => {
+      console.log('SocialStore: Received Event', event.type);
+      this.handleUserEvent(event);
+    });
+  }
+
+  private unsubscribeFromUserUpdates() {
+    if (this.userSub) {
+      this.userSub.unsubscribe();
+      this.userSub = null;
+    }
+  }
+
+  private handleUserEvent(event: GameEvent) {
+    console.log('SocialStore: Handling event', event.type);
+    
+    // Refresh for any event
+    this.loadSocialData();
+
+    // Specific logic for updates that might need a tiny DB sync delay
+    if (event.type === 'GAME_INVITE' || event.type === 'FRIEND_PROFILE_UPDATED') {
+      setTimeout(() => {
+        console.log('SocialStore: Performing delayed refresh for', event.type);
+        this.loadSocialData();
+      }, 500);
+    }
+
+    if (event.type === 'GAME_INVITE') {
+      alert(`New game invitation from ${event.payload.inviterName}!`);
+    }
+  }
 
   loadSocialData() {
     const user = this.auth.user();

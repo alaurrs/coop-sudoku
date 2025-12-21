@@ -74,11 +74,26 @@ public class GameController {
         gameService.confirmMove(roomId, req.userId(), req.accepted());
     }
 
-    @MessageMapping("/game/{roomId}/chat")
-    public void chat(@DestinationVariable String roomId, @Payload ChatRequest req) {
-        // Broadcast directly to topic
-        messagingTemplate.convertAndSend("/topic/game/" + roomId, 
-            new GameEvent("GAME_CHAT", new ChatMessage(req.userId(), req.message(), System.currentTimeMillis()))
-        );
-    }
-}
+            @MessageMapping("/game/{roomId}/chat")
+
+            public void chat(@DestinationVariable String roomId, @Payload ChatRequest req) {
+
+                String username = socialService.findUsernameById(req.userId());
+
+                String avatar = socialService.findAvatarById(req.userId());
+
+                // Broadcast directly to topic
+
+                messagingTemplate.convertAndSend("/topic/game/" + roomId, 
+
+                    new GameEvent("GAME_CHAT", new ChatMessage(req.userId(), username, avatar, req.message(), System.currentTimeMillis()))
+
+                );
+
+            }
+
+        }
+
+        
+
+    

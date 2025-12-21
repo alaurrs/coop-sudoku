@@ -49,14 +49,42 @@ import { environment } from '../../environments/environment';
                 <div class="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1">{{ user.username }}</div>
                 <div class="text-[11px] text-slate-500 font-medium">Player</div>
               </div>
-              <div class="size-9 rounded-full bg-slate-200 dark:bg-slate-700 border-2 border-white dark:border-slate-800 overflow-hidden shadow-sm">
-                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{user.username}}" alt="avatar" />
-              </div>
+              <button (click)="showAvatarModal.set(true)" class="group relative size-9 rounded-full bg-slate-200 dark:bg-slate-700 border-2 border-white dark:border-slate-800 overflow-hidden shadow-sm hover:ring-2 hover:ring-blue-500 transition-all">
+                 <img [src]="getAvatarUrl(user.avatar)" alt="avatar" />
+                 <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span class="material-symbols-outlined text-white text-[16px]">edit</span>
+                 </div>
+              </button>
             </div>
             <button (click)="auth.logout()" class="text-sm font-bold text-rose-500 hover:text-rose-400 ml-2">Logout</button>
           </div>
         </div>
       </nav>
+
+      <!-- Avatar Selection Modal -->
+      <div *ngIf="showAvatarModal()" class="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/40 dark:bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+           <div class="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-8 rounded-[2.5rem] shadow-2xl max-w-sm w-full mx-4 transition-colors duration-300">
+              <div class="flex justify-between items-center mb-8">
+                  <h3 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Choose Avatar</h3>
+                  <button (click)="showAvatarModal.set(false)" class="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                      <span class="material-symbols-outlined">close</span>
+                  </button>
+              </div>
+              
+              <div class="grid grid-cols-4 gap-4 mb-8">
+                  <button *ngFor="let av of avatars" (click)="changeAvatar(av)"
+                          class="aspect-square rounded-xl overflow-hidden border-4 transition-all hover:scale-110 active:scale-95"
+                          [class.border-blue-500]="auth.user()?.avatar === av"
+                          [class.border-transparent]="auth.user()?.avatar !== av">
+                     <img [src]="getAvatarUrl(av)" class="w-full h-full object-cover">
+                  </button>
+              </div>
+
+              <button (click)="showAvatarModal.set(false)" class="w-full py-4 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white font-bold rounded-2xl">
+                  Close
+              </button>
+           </div>
+      </div>
 
       <div class="flex h-[calc(100vh-64px)] max-w-[1600px] mx-auto overflow-hidden">
         
@@ -218,7 +246,7 @@ import { environment } from '../../environments/environment';
              <div *ngFor="let inv of social.invites()" class="bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl p-5 border border-blue-100 dark:border-blue-900/20 mb-4 shadow-sm">
                 <div class="flex items-start gap-4 mb-4">
                     <div class="relative">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{inv.inviterName}}" class="size-11 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-blue-100 dark:border-transparent">
+                        <img [src]="getAvatarUrl('av1')" class="size-11 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-blue-100 dark:border-transparent">
                         <div class="absolute -bottom-1 -right-1 size-5 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center border border-blue-100 dark:border-slate-700">
                            <span class="material-symbols-outlined text-[12px] text-blue-500 filled">mail</span>
                         </div>
@@ -238,7 +266,7 @@ import { environment } from '../../environments/environment';
              <div *ngFor="let req of social.friendRequests()" class="bg-rose-50/50 dark:bg-rose-900/10 rounded-2xl p-5 border border-rose-100 dark:border-rose-900/20 mb-4 shadow-sm">
                 <div class="flex items-start gap-4 mb-4">
                     <div class="relative">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{req.senderName}}" class="size-11 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-rose-100 dark:border-transparent">
+                        <img [src]="getAvatarUrl('av2')" class="size-11 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-rose-100 dark:border-transparent">
                         <div class="absolute -bottom-1 -right-1 size-5 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center border border-rose-100 dark:border-slate-700">
                            <span class="material-symbols-outlined text-[12px] text-rose-500 filled">person_add</span>
                         </div>
@@ -262,7 +290,7 @@ import { environment } from '../../environments/environment';
              <ul class="space-y-6">
                 <li *ngFor="let friend of social.friends()" class="flex items-center gap-4 group cursor-pointer relative" (click)="toggleFriendMenu(friend.id, $event)">
                     <div class="relative">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{friend.username}}" class="size-11 rounded-full bg-slate-100 dark:bg-slate-800 group-hover:ring-2 ring-blue-500/30 transition-all shadow-sm">
+                        <img [src]="getAvatarUrl(friend.avatar)" class="size-11 rounded-full bg-slate-100 dark:bg-slate-800 group-hover:ring-2 ring-blue-500/30 transition-all shadow-sm">
                         <div class="absolute bottom-0 right-0 size-3.5 rounded-full border-2 border-white dark:border-[#0f172a]"
                              [class.bg-emerald-500]="friend.status === 'Online'"
                              [class.bg-amber-500]="friend.status === 'In a game'"
@@ -339,7 +367,7 @@ import { environment } from '../../environments/environment';
                 <div class="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-hide">
                     <div *ngFor="let user of searchResults()" class="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-900 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shadow-sm">
                         <div class="flex items-center gap-4">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{user.username}}" class="size-11 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-transparent">
+                            <img [src]="getAvatarUrl(user.avatar)" class="size-11 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-transparent">
                             <span class="text-sm font-black text-slate-900 dark:text-white">{{ user.username }}</span>
                         </div>
                         
@@ -371,10 +399,13 @@ export class LobbyComponent {
   roomCodeInput = signal('');
   isLoading = signal(false);
   showFindFriendsModal = signal(false);
+  showAvatarModal = signal(false);
   searchQuery = signal('');
   searchResults = signal<any[]>([]);
   activeFriendMenu = signal<string | null>(null);
   selectedFilter = signal<'ALL' | 'EASY' | 'MEDIUM' | 'HARD'>('ALL');
+
+  avatars = ['av1', 'av2', 'av3', 'av4', 'av5', 'av6', 'av7', 'av8'];
 
   filteredLobbies = computed(() => {
     const lobbies = this.store.activeLobbies();
@@ -386,11 +417,15 @@ export class LobbyComponent {
   constructor() {
     this.store.loadLobbies();
     this.social.loadSocialData();
-    
-    // Refresh social data every 30 seconds for status
-    setInterval(() => {
-      this.social.loadSocialData();
-    }, 30000);
+  }
+
+  getAvatarUrl(name: string | null | undefined) {
+    if (!name || name === 'guest') return 'https://api.dicebear.com/7.x/bottts/svg?seed=guest';
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+  }
+
+  changeAvatar(avatar: string) {
+    this.auth.updateAvatar(avatar);
   }
 
   createGame(difficulty: string) {
@@ -400,7 +435,7 @@ export class LobbyComponent {
     this.http.post<any>(`${environment.apiUrl}/game/create?difficulty=${difficulty}&userId=${user.id}`, {}).subscribe({
       next: (session) => {
         this.isLoading.set(false);
-        this.store.initGame(session, { id: user.id, username: user.username });
+        this.store.initGame(session, { id: user.id, username: user.username, avatar: user.avatar });
       },
       error: () => this.isLoading.set(false)
     });
@@ -412,13 +447,13 @@ export class LobbyComponent {
     this.isLoading.set(true);
     this.http.post<any>(`${environment.apiUrl}/game/create?difficulty=${difficulty}&userId=${user.id}`, {}).subscribe({
       next: (session) => {
-        this.store.initGame(session, { id: user.id, username: user.username });
+        this.store.initGame(session, { id: user.id, username: user.username, avatar: user.avatar });
         this.http.post(`${environment.apiUrl}/game/${session.roomId}/start`, {}).subscribe({
             next: () => this.isLoading.set(false),
             error: () => this.isLoading.set(false)
         });
       },
-      error: () => this.isLoading.set(false)
+      error: () => this.isLoading.set(true)
     });
   }
 
@@ -432,7 +467,7 @@ export class LobbyComponent {
     this.http.post<any>(`${environment.apiUrl}/game/${code}/join?userId=${user.id}`, {}).subscribe({
       next: (session) => {
         this.isLoading.set(false);
-        this.store.initGame(session, { id: user.id, username: user.username });
+        this.store.initGame(session, { id: user.id, username: user.username, avatar: user.avatar });
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -459,7 +494,6 @@ export class LobbyComponent {
       return;
     }
     this.social.searchUsers(query).subscribe(res => {
-        // Exclude self
         const me = this.auth.user()?.username;
         this.searchResults.set(res.filter(u => u.username !== me));
     });
@@ -470,15 +504,11 @@ export class LobbyComponent {
     if (!currentUser) return;
 
     this.isLoading.set(true);
-    // 1. Create a real game first with chosen difficulty
     this.http.post<any>(`${environment.apiUrl}/game/create?difficulty=${difficulty}&userId=${currentUser.id}`, {}).subscribe({
       next: (session) => {
-        // 2. Send invitation with the real room code
         this.social.sendInvite(user.username, session.roomId);
-        
-        // 3. Move the sender to the game
         this.isLoading.set(false);
-        this.store.initGame(session, { id: currentUser.id, username: currentUser.username });
+        this.store.initGame(session, { id: currentUser.id, username: currentUser.username, avatar: currentUser.avatar });
         this.activeFriendMenu.set(null);
         alert(`Invitation (${difficulty}) sent! You have been moved to Room #${session.roomId}`);
       },
@@ -491,7 +521,7 @@ export class LobbyComponent {
 
   sendFriendRequest(user: any) {
     this.social.sendFriendRequest(user.username);
-    this.submitSearch(); // Refresh search results to show status
+    this.submitSearch(); 
   }
 
   removeFriend(friend: any) {

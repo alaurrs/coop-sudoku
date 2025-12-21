@@ -19,6 +19,9 @@ public class UserEntity {
     @Column(name = "is_guest")
     private boolean isGuest;
 
+    @Column(name = "avatar")
+    private String avatar; // Key or URL for the chosen avatar
+
     @Column(name = "created_at")
     private Instant createdAt;
 
@@ -39,6 +42,8 @@ public class UserEntity {
     public String getUsername() { return username; }
     public String getPasswordHash() { return passwordHash; }
     public boolean isGuest() { return isGuest; }
+    public String getAvatar() { return avatar; }
+    public void setAvatar(String avatar) { this.avatar = avatar; }
     public Instant getLastSeenAt() { return lastSeenAt; }
     public void setLastSeenAt(Instant lastSeenAt) { this.lastSeenAt = lastSeenAt; }
 }

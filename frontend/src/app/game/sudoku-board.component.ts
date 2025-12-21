@@ -59,27 +59,27 @@ import { ThemeService } from '../services/theme.service';
 
       <!-- Header -->
       <header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-[#0f172a] flex items-center justify-between px-6 shrink-0 z-20 backdrop-blur transition-colors duration-300">
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 w-1/3">
            <div class="size-9 bg-blue-500 rounded-lg flex items-center justify-center shadow-sm">
              <span class="material-symbols-outlined text-white">grid_view</span>
            </div>
-           <div>
-             <h1 class="font-black text-slate-900 dark:text-white leading-tight tracking-tight">Leverage Sudoku</h1>
-             <div class="flex items-center gap-2">
-                <span class="text-[10px] bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-500 dark:text-slate-400 font-bold tracking-wider border border-slate-200 dark:border-slate-700 uppercase">ROOM: {{ store.roomId() }}</span>
-             </div>
+           <h1 class="font-black text-slate-900 dark:text-white leading-tight tracking-tight hidden sm:block">Leverage Sudoku</h1>
+        </div>
+
+        <div class="flex flex-col items-center justify-center w-1/3">
+           <div class="px-4 py-1 bg-slate-100 dark:bg-blue-500/10 border border-slate-200 dark:border-blue-500/20 rounded-xl shadow-sm">
+              <span class="text-[10px] text-slate-400 dark:text-blue-400 font-black uppercase tracking-[0.2em] block text-center leading-none mb-1">Room Code</span>
+              <span class="text-lg font-mono font-black text-slate-900 dark:text-white tracking-widest leading-none">{{ store.roomId() }}</span>
            </div>
         </div>
-        <div class="flex items-center gap-3">
+
+        <div class="flex items-center justify-end gap-3 w-1/3">
            <button class="h-9 px-4 bg-blue-500 hover:bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-xl flex items-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:scale-95">
               <span class="material-symbols-outlined text-[18px]">share</span>
-              Invite Player
+              <span class="hidden md:inline">Invite Player</span>
            </button>
            <button (click)="themeService.toggleTheme()" class="size-9 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-400 border border-slate-200 dark:border-transparent rounded-xl transition-colors flex items-center justify-center">
               <span class="material-symbols-outlined text-[20px]">{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</span>
-           </button>
-           <button class="size-9 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-400 border border-slate-200 dark:border-transparent rounded-xl transition-colors flex items-center justify-center">
-              <span class="material-symbols-outlined text-[20px]">help</span>
            </button>
         </div>
       </header>
@@ -120,7 +120,7 @@ import { ThemeService } from '../services/theme.service';
                  <div class="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-slate-800/50 border-2 border-blue-500 shadow-lg shadow-blue-500/10 relative overflow-hidden transition-all">
                     <div class="absolute inset-0 bg-blue-50 dark:bg-blue-500/5 z-0"></div>
                     <div class="relative z-10 size-11 rounded-full border-2 border-blue-500 p-0.5 shadow-sm">
-                       <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{store.currentUser()}}" class="rounded-full bg-white dark:bg-slate-900">
+                       <img [src]="getAvatarUrl(store.userAvatar())" class="rounded-full bg-white dark:bg-slate-900">
                     </div>
                     <div class="relative z-10 flex-1 min-w-0">
                        <div class="text-sm font-black text-slate-900 dark:text-white truncate">{{ store.currentUser() }}</div>
@@ -133,10 +133,10 @@ import { ThemeService } from '../services/theme.service';
                  <ng-container *ngFor="let p of otherPlayers()">
                     <div class="flex items-center gap-4 p-4 rounded-2xl border border-slate-100 dark:border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group">
                         <div class="relative size-11 rounded-full border-2 border-slate-200 dark:border-rose-500 p-0.5 group-hover:border-rose-400 transition-colors">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{p}}" class="rounded-full bg-slate-100 dark:bg-slate-900">
+                            <img [src]="getAvatarUrl(p.avatar)" class="rounded-full bg-slate-100 dark:bg-slate-900">
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="text-sm font-bold text-slate-700 dark:text-white truncate">{{p}}</div>
+                            <div class="text-sm font-bold text-slate-700 dark:text-white truncate">{{p.username}}</div>
                             <div class="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider truncate">Thinking...</div>
                         </div>
                         <div class="size-2 rounded-full bg-slate-300 dark:bg-rose-500"></div>
@@ -153,10 +153,8 @@ import { ThemeService } from '../services/theme.service';
         <!-- Main Board Area -->
         <main class="flex-1 bg-white dark:bg-[#020617] flex flex-col items-center justify-center p-4 relative overflow-y-auto transition-colors duration-300">
            
-           <!-- Subtle background pattern for light mode -->
            <div class="absolute inset-0 bg-[radial-gradient(#ffe4e6_1.5px,transparent_1.5px)] [background-size:24px_24px] opacity-40 dark:opacity-0 pointer-events-none"></div>
 
-           <!-- Background bunny/deco -->
            <div class="absolute bottom-10 right-10 opacity-5 dark:opacity-5 pointer-events-none select-none">
                <span class="material-symbols-outlined text-[300px]">pets</span>
            </div>
@@ -166,7 +164,7 @@ import { ThemeService } from '../services/theme.service';
               <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xl rounded-2xl px-8 py-3 flex items-center gap-4">
                  <span class="material-symbols-outlined text-rose-500 dark:text-blue-400 filled text-2xl">lightbulb</span>
                  <span class="text-sm font-bold text-slate-700 dark:text-slate-200">
-                    <span *ngIf="isMyConfirm()"><strong class="text-slate-900 dark:text-white">{{otherPlayers()[0]}}</strong> suggested <strong class="text-rose-500 dark:text-blue-400 text-xl mx-1 underline decoration-2 underline-offset-4">{{p.value}}</strong> at cell R{{p.row+1}} C{{p.col+1}}</span>
+                    <span *ngIf="isMyConfirm()"><strong class="text-slate-900 dark:text-white">{{p.suggesterName}}</strong> suggested <strong class="text-rose-500 dark:text-blue-400 text-xl mx-1 underline decoration-2 underline-offset-4">{{p.value}}</strong> at cell R{{p.row+1}} C{{p.col+1}}</span>
                     <span *ngIf="!isMyConfirm()" class="text-slate-500">Suggestion sent... Waiting for partner</span>
                  </span>
               </div>
@@ -210,17 +208,14 @@ import { ThemeService } from '../services/theme.service';
                           </div>
                        </ng-container>
                        
-                       <!-- Selection indicator for others (dot) -->
                        <div *ngIf="selected()?.r === r && selected()?.c === c" class="absolute top-1.5 right-1.5 size-2 bg-white/50 rounded-full"></div>
 
                     </div>
                  </ng-container>
 
                  <!-- Thick separators (3x3 blocks) -->
-                 <!-- Vertical -->
                  <div class="absolute left-[33.33%] top-0 bottom-0 w-[4px] bg-rose-400 dark:bg-slate-400 pointer-events-none z-20"></div>
                  <div class="absolute left-[66.66%] top-0 bottom-0 w-[4px] bg-rose-400 dark:bg-slate-400 pointer-events-none z-20"></div>
-                 <!-- Horizontal -->
                  <div class="absolute top-[33.33%] left-0 right-0 h-[4px] bg-rose-400 dark:bg-slate-400 pointer-events-none z-20"></div>
                  <div class="absolute top-[66.66%] left-0 right-0 h-[4px] bg-rose-400 dark:bg-slate-400 pointer-events-none z-20"></div>
 
@@ -229,7 +224,6 @@ import { ThemeService } from '../services/theme.service';
               <!-- Controls / Action Bar -->
               <div class="w-full flex items-center justify-between gap-6 p-6 rounded-[2rem] bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 shadow-xl backdrop-blur transition-colors duration-300">
                  
-                 <!-- Tool Actions -->
                  <div class="flex items-center gap-3 shrink-0">
                     <button class="size-12 md:size-14 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-100 dark:border-transparent transition-all flex items-center justify-center shadow-sm">
                        <span class="material-symbols-outlined text-2xl">undo</span>
@@ -242,7 +236,6 @@ import { ThemeService } from '../services/theme.service';
                     </button>
                  </div>
 
-                 <!-- Numpad (If Playing) -->
                  <div *ngIf="!pending()" class="flex-1 flex justify-center gap-2 md:gap-3 overflow-x-auto pb-1 scrollbar-hide">
                     <button *ngFor="let num of [1,2,3,4,5,6,7,8,9]" 
                             (click)="onNumberInput(num)"
@@ -251,13 +244,12 @@ import { ThemeService } from '../services/theme.service';
                     </button>
                  </div>
 
-                 <!-- Confirmation Actions (If Pending) -->
                  <div *ngIf="isMyConfirm()" class="flex gap-4 animate-in slide-in-from-bottom-4 fade-in duration-300">
                     <button (click)="onConfirm(true)" class="h-14 px-8 bg-blue-500 hover:bg-blue-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-blue-500/25 flex items-center gap-3 transition-all active:scale-95">
                        <span class="material-symbols-outlined text-xl">check_circle</span>
                        Confirm "{{pending()?.value}}"
                     </button>
-                    <button (click)="onConfirm(false)" class="h-14 px-8 bg-white dark:bg-slate-700 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 font-black uppercase tracking-widest text-xs rounded-2xl border-2 border-rose-100 dark:border-transparent transition-all flex items-center gap-3 active:scale-95">
+                    <button (click)="onConfirm(false)" class="h-14 px-8 bg-white dark:bg-slate-700 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 font-black uppercase tracking-widest text-xs rounded-2xl border-2 border-rose-100 dark:border-transparent transition-all items-center gap-3 active:scale-95 flex">
                        <span class="material-symbols-outlined text-xl">cancel</span>
                        Reject
                     </button>
@@ -275,30 +267,29 @@ import { ThemeService } from '../services/theme.service';
               <button class="flex-1 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Activity Log</button>
            </div>
            
-           <!-- Chat Body -->
            <div class="flex-1 p-6 space-y-6 overflow-y-auto flex flex-col scrollbar-hide">
               <ng-container *ngFor="let msg of store.chatMessages()">
                   <!-- Message -->
-                  <div class="flex gap-4" [class.flex-row-reverse]="msg.userId === store.currentUser()">
+                  <div class="flex gap-4" [class.flex-row-reverse]="msg.userId === store.currentUserId()">
                      <div class="relative shrink-0">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{msg.userId}}" class="size-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent shadow-sm">
-                        <div *ngIf="msg.userId !== store.currentUser()" class="absolute -bottom-1 -right-1 size-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-[#0f172a]"></div>
+                        <img [src]="getAvatarUrl(msg.avatar)" class="size-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-transparent shadow-sm">
+                        <div *ngIf="msg.userId !== store.currentUserId()" class="absolute -bottom-1 -right-1 size-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-[#0f172a]"></div>
                      </div>
-                     <div class="flex-1 space-y-1.5" [class.items-end]="msg.userId === store.currentUser()" [class.flex]="msg.userId === store.currentUser()" [class.flex-col]="msg.userId === store.currentUser()">
+                     <div class="flex-1 space-y-1.5" [class.items-end]="msg.userId === store.currentUserId()" [class.flex]="msg.userId === store.currentUserId()" [class.flex-col]="msg.userId === store.currentUserId()">
                         <div class="flex items-baseline gap-2">
-                           <span *ngIf="msg.userId !== store.currentUser()" class="text-xs font-black text-slate-900 dark:text-white tracking-tight">{{msg.userId}}</span>
+                           <span *ngIf="msg.userId !== store.currentUserId()" class="text-xs font-black text-slate-900 dark:text-white tracking-tight">{{msg.username}}</span>
                            <span class="text-[10px] text-slate-400 font-bold">{{ msg.timestamp | date:'shortTime' }}</span>
-                           <span *ngIf="msg.userId === store.currentUser()" class="text-xs font-black text-slate-900 dark:text-white tracking-tight">You</span>
+                           <span *ngIf="msg.userId === store.currentUserId()" class="text-xs font-black text-slate-900 dark:text-white tracking-tight">You</span>
                         </div>
                         <div class="text-[13px] font-medium p-4 rounded-3xl max-w-[220px] leading-relaxed shadow-sm transition-colors duration-300"
-                             [class.bg-slate-100]="msg.userId !== store.currentUser()"
-                             [class.dark:bg-slate-800]="msg.userId !== store.currentUser()"
-                             [class.rounded-tl-none]="msg.userId !== store.currentUser()"
-                             [class.text-slate-700]="msg.userId !== store.currentUser()"
-                             [class.dark:text-slate-300]="msg.userId !== store.currentUser()"
-                             [class.bg-blue-500]="msg.userId === store.currentUser()"
-                             [class.text-white]="msg.userId === store.currentUser()"
-                             [class.rounded-tr-none]="msg.userId === store.currentUser()">
+                             [class.bg-slate-100]="msg.userId !== store.currentUserId()"
+                             [class.dark:bg-slate-800]="msg.userId !== store.currentUserId()"
+                             [class.rounded-tl-none]="msg.userId !== store.currentUserId()"
+                             [class.text-slate-700]="msg.userId !== store.currentUserId()"
+                             [class.dark:text-slate-300]="msg.userId !== store.currentUserId()"
+                             [class.bg-blue-500]="msg.userId === store.currentUserId()"
+                             [class.text-white]="msg.userId === store.currentUserId()"
+                             [class.rounded-tr-none]="msg.userId === store.currentUserId()">
                            {{ msg.message }}
                         </div>
                      </div>
@@ -313,7 +304,6 @@ import { ThemeService } from '../services/theme.service';
               </div>
            </div>
 
-           <!-- Input -->
            <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0f172a] transition-colors duration-300">
               <div class="relative group">
                  <input type="text" [(ngModel)]="chatInput" (keyup.enter)="sendChat()" placeholder="Type a message..." 
@@ -332,14 +322,12 @@ import { ThemeService } from '../services/theme.service';
     :host {
       display: block;
     }
-    /* Hide scrollbar for Chrome, Safari and Opera */
     .scrollbar-hide::-webkit-scrollbar {
       display: none;
     }
-    /* Hide scrollbar for IE, Edge and Firefox */
     .scrollbar-hide {
-      -ms-overflow-style: none;  /* IE and Edge */
-      scrollbar-width: none;  /* Firefox */
+      -ms-overflow-style: none;
+      scrollbar-width: none;
     }
   `]
 })
@@ -347,13 +335,11 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
   readonly store = inject(GameStore);
   public themeService = inject(ThemeService);
   
-  // Local state
   hoverCell = signal<{r: number, c: number} | null>(null);
   chatInput = '';
   elapsedTime = signal('00:00');
   private timerInterval: any;
 
-  // Expose signals
   readonly grid = this.store.grid;
   readonly selected = this.store.selectedCell;
   readonly pending = this.store.pendingSuggestion;
@@ -372,6 +358,11 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.timerInterval) clearInterval(this.timerInterval);
+  }
+
+  getAvatarUrl(name: string | null | undefined) {
+    if (!name || name === 'guest') return 'https://api.dicebear.com/7.x/bottts/svg?seed=guest';
+    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
   }
 
   startTimer() {
@@ -395,8 +386,8 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
 
   otherPlayers() {
      const all = this.store.players() || [];
-     const me = this.store.currentUser();
-     return all.filter(p => p !== me);
+     const me = this.store.currentUserId();
+     return all.filter(p => p.id !== me);
   }
 
   onCellClick(r: number, c: number) {
