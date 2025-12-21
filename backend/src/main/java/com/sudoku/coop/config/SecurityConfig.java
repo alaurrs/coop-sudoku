@@ -156,55 +156,123 @@ public class SecurityConfig {
 
 
 
-        @Bean
+            @Bean
 
 
 
-        public CorsConfigurationSource corsConfigurationSource() {
+    
 
 
 
-            CorsConfiguration configuration = new CorsConfiguration();
+            public CorsConfigurationSource corsConfigurationSource() {
 
 
 
-            
+    
 
 
 
-            String prodOrigin = System.getenv("ALLOWED_ORIGIN");
+                CorsConfiguration configuration = new CorsConfiguration();
 
 
 
-            if (prodOrigin != null && !prodOrigin.isEmpty()) {
+    
 
 
 
-                // Supprime le slash final s'il existe
+                
 
 
 
-                if (prodOrigin.endsWith("/")) {
+    
 
 
 
-                    prodOrigin = prodOrigin.substring(0, prodOrigin.length() - 1);
+                // Pour le debug : on autorise tout temporairement
 
 
 
-                }
+    
 
 
 
-                configuration.setAllowedOrigins(List.of("http://localhost:4200", prodOrigin));
+                configuration.setAllowedOriginPatterns(List.of("*")); 
 
 
 
-            } else {
+    
 
 
 
-                configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+
+
+
+    
+
+
+
+                configuration.setAllowedHeaders(Arrays.asList("*"));
+
+
+
+    
+
+
+
+                configuration.setExposedHeaders(List.of("Authorization"));
+
+
+
+    
+
+
+
+                configuration.setAllowCredentials(true);
+
+
+
+    
+
+
+
+                configuration.setMaxAge(3600L);
+
+
+
+    
+
+
+
+                
+
+
+
+    
+
+
+
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+
+
+    
+
+
+
+                source.registerCorsConfiguration("/**", configuration);
+
+
+
+    
+
+
+
+                return source;
+
+
+
+    
 
 
 
@@ -216,39 +284,7 @@ public class SecurityConfig {
 
 
 
-            configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
-
-
-
-            configuration.setAllowedHeaders(Arrays.asList("*")); // Plus permissif pour le débug
-
-
-
-            configuration.setAllowCredentials(true);
-
-
-
-            configuration.setMaxAge(3600L);
-
-
-
-            
-
-
-
-            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-
-
-
-            source.registerCorsConfiguration("/**", configuration);
-
-
-
-            return source;
-
-
-
-        }
+        
 
 
 
