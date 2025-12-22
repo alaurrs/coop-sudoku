@@ -12,16 +12,18 @@ public class GameSession {
     private GameState state;
     private Suggestion pendingSuggestion;
     private long startTime;
+    private Long completedTime;
     private String difficulty;
 
     public record PlayerInfo(String id, String username, String avatar) {}
 
-    public GameSession(String roomId, int[][] currentGrid, int[][] solution, PlayerInfo host, GameState state, long startTime, String difficulty) {
+    public GameSession(String roomId, int[][] currentGrid, int[][] solution, PlayerInfo host, GameState state, long startTime, Long completedTime, String difficulty) {
         this.roomId = roomId;
         this.currentGrid = currentGrid;
         this.solution = solution;
         this.state = state;
         this.startTime = startTime;
+        this.completedTime = completedTime;
         this.difficulty = difficulty;
         this.players.add(host);
     }
@@ -46,5 +48,6 @@ public class GameSession {
     public Suggestion getPendingSuggestion() { return pendingSuggestion; }
     public void setPendingSuggestion(Suggestion pendingSuggestion) { this.pendingSuggestion = pendingSuggestion; }
     public long getStartTime() { return startTime; }
+    public Long getCompletedTime() { return completedTime; }
     public String getDifficulty() { return difficulty; }
 }

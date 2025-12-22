@@ -341,7 +341,15 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
     return val !== 0 ? val : null;
   });
   
-  ngOnInit() { this.startTimer(); }
+  ngOnInit() { 
+    // If game is already completed on load, calculate and set final time immediately
+    if (this.store.status() === 'COMPLETED') {
+        this.updateTime();
+    } else {
+        this.startTimer(); 
+    }
+  }
+  
   ngOnDestroy() { if (this.timerInterval) clearInterval(this.timerInterval); }
 
   isDesktop() { return window.innerWidth >= 1024; }
@@ -351,16 +359,28 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
     return `https://api.dicebear.com/7.x/avataaars/svg?seed=${name}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
   }
 
+  updateTime() {
+    const start = this.store.startTime();
+    if (!start) return; 
+    
+    // If game is completed, use the stored completedTime (from DB or local event)
+    // Otherwise use current time
+    const end = this.store.completedTime() || Date.now();
+    const diff = Math.floor((end - start) / 1000);
+    
+    if (diff < 0) { this.elapsedTime.set('00:00'); return; }
+    const m = Math.floor(diff / 60).toString().padStart(2, '0');
+    const s = (diff % 60).toString().padStart(2, '0');
+    this.elapsedTime.set(`${m}:${s}`);
+  }
+
   startTimer() {
     this.timerInterval = setInterval(() => {
-        const start = this.store.startTime();
-        if (!start) return; 
-        const now = Date.now();
-        const diff = Math.floor((now - start) / 1000);
-        if (diff < 0) { this.elapsedTime.set('00:00'); return; }
-        const m = Math.floor(diff / 60).toString().padStart(2, '0');
-        const s = (diff % 60).toString().padStart(2, '0');
-        this.elapsedTime.set(`${m}:${s}`);
+        this.updateTime();
+        // Stop timer if game is completed
+        if (this.store.status() === 'COMPLETED') {
+            clearInterval(this.timerInterval);
+        }
     }, 1000);
   }
 

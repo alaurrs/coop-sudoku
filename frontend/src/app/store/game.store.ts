@@ -22,6 +22,7 @@ export interface GameState {
   lastMoveStatus: 'CORRECT' | 'INCORRECT' | null;
   endReason: 'SOLVED' | 'SURRENDERED' | null;
   startTime: number;
+  completedTime: number | null;
   difficulty: string;
   activeLobbies: GameSummary[];
 }
@@ -41,6 +42,7 @@ const INITIAL_STATE: GameState = {
   lastMoveStatus: null,
   endReason: null,
   startTime: 0,
+  completedTime: null,
   difficulty: 'MEDIUM',
   activeLobbies: []
 };
@@ -72,6 +74,7 @@ export class GameStore {
   readonly lastMoveStatus = computed(() => this.state().lastMoveStatus);
   readonly endReason = computed(() => this.state().endReason);
   readonly startTime = computed(() => this.state().startTime);
+  readonly completedTime = computed(() => this.state().completedTime);
   readonly difficulty = computed(() => this.state().difficulty);
   readonly activeLobbies = computed(() => this.state().activeLobbies);
   
@@ -121,6 +124,7 @@ export class GameStore {
       currentUsername: user.username,
       currentUserAvatar: user.avatar,
       startTime: session.startTime,
+      completedTime: session.completedTime,
       difficulty: session.difficulty,
       pendingSuggestion: null,
       chatMessages: []
@@ -155,7 +159,8 @@ export class GameStore {
         this.state.update(s => ({
            ...s,
            status: 'COMPLETED',
-           endReason: 'SURRENDERED'
+           endReason: 'SURRENDERED',
+           completedTime: Date.now() // Set local completed time for real-time surrender
         }));
         break;
     }
@@ -231,6 +236,7 @@ export class GameStore {
       players: session.players,
       status: session.state,
       startTime: session.startTime,
+      completedTime: session.completedTime,
       difficulty: session.difficulty
     }));
   }
@@ -248,7 +254,8 @@ export class GameStore {
         status: result.isWin ? 'COMPLETED' : s.status,
         mistakes: !result.isCorrect ? s.mistakes + 1 : s.mistakes,
         lastMoveStatus: result.isCorrect ? 'CORRECT' : 'INCORRECT',
-        endReason: result.isWin ? 'SOLVED' : s.endReason
+        endReason: result.isWin ? 'SOLVED' : s.endReason,
+        completedTime: result.isWin ? Date.now() : s.completedTime // Set local completed time for real-time win
       };
     });
     

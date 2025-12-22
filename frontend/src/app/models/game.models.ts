@@ -5,6 +5,7 @@ export interface GameSession {
   players: PlayerInfo[];
   state: 'WAITING' | 'IN_PROGRESS' | 'COMPLETED';
   startTime: number;
+  completedTime: number | null;
   difficulty: string;
 }
 

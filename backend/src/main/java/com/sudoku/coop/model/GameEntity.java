@@ -20,6 +20,9 @@ public class GameEntity {
     @Column(name = "created_at")
     private Instant createdAt;
 
+    @Column(name = "completed_at")
+    private Instant completedAt;
+
     private String hostId;
     private String player2Id;
 
@@ -84,5 +87,7 @@ public class GameEntity {
     public GameState getState() { return state; }
     public void setState(GameState state) { this.state = state; }
     public Instant getCreatedAt() { return createdAt; }
+    public Instant getCompletedAt() { return completedAt; }
+    public void setCompletedAt(Instant completedAt) { this.completedAt = completedAt; }
     public String getDifficulty() { return difficulty; }
 }

@@ -3,6 +3,8 @@ package com.sudoku.coop.game;
 import com.sudoku.coop.model.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -147,6 +149,7 @@ public class GameService {
         if (entity == null) return;
         
         entity.setState(GameState.COMPLETED);
+        entity.setCompletedAt(Instant.now());
         gameRepository.save(entity);
         broadcast(roomCode, "GAME_SURRENDERED", userId);
         broadcastLobbyUpdate();
@@ -163,6 +166,7 @@ public class GameService {
         
         if (isCorrect && Arrays.deepEquals(current, solution)) {
             entity.setState(GameState.COMPLETED);
+            entity.setCompletedAt(Instant.now());
             broadcastLobbyUpdate();
         }
         
@@ -191,6 +195,7 @@ public class GameService {
             host,
             entity.getState(),
             entity.getCreatedAt().toEpochMilli(),
+            entity.getCompletedAt() != null ? entity.getCompletedAt().toEpochMilli() : null,
             entity.getDifficulty()
         );
         
