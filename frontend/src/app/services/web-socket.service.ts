@@ -17,19 +17,15 @@ export class WebSocketService {
     
     let wsUrl = environment.wsUrl;
     
-    // Construction de l'URL pour Spring STOMP raw (nécessite le suffixe /websocket)
-    if (wsUrl.startsWith('/')) {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host;
-      wsUrl = `${protocol}//${host}${wsUrl}/websocket`;
-    } 
-    else {
-      // S'assurer que le protocole est ws/wss
+    // Simplification radicale : on force le chemin correct sans essayer d'être trop intelligent
+    // Si c'est une URL complète (cas normal en prod), on remplace juste le protocole et on ajoute /websocket
+    if (wsUrl.startsWith('http')) {
       wsUrl = wsUrl.replace(/^http/, 'ws');
-      // S'assurer du suffixe /websocket
-      if (!wsUrl.endsWith('/websocket')) {
-        wsUrl = wsUrl.replace(/\/$/, '') + '/websocket';
-      }
+    }
+    
+    // Si l'URL contient déjà /api/ws-sudoku, on ne touche à rien, sinon on s'assure du bon format
+    if (!wsUrl.endsWith('/websocket')) {
+       wsUrl = wsUrl.replace(/\/+$/, '') + '/websocket';
     }
 
     console.log('WebSocket: Attempting connection to', wsUrl);

@@ -116,194 +116,120 @@ public class SecurityConfig {
 
 
 
-                    .authorizeHttpRequests(auth -> auth
+                                .authorizeHttpRequests(auth -> auth
 
 
 
-                                        .requestMatchers("/api/auth/**", "/auth/**").permitAll()
+                                    .requestMatchers("/api/auth/**", "/auth/**").permitAll()
 
 
 
-                                        .requestMatchers("/api/game/ping", "/game/ping").permitAll()
+                                    .requestMatchers("/api/game/ping", "/game/ping").permitAll()
 
 
 
-                                        .requestMatchers("/ws-sudoku/**", "/ws-sudoku", "/api/ws-sudoku/**", "/api/ws-sudoku").permitAll()
+                                    .requestMatchers("/ws-sudoku/**", "/api/ws-sudoku/**").permitAll()
 
 
 
-                                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
 
 
-                        
+                                    .anyRequest().authenticated()
 
 
 
-                        .anyRequest().authenticated()
+                                )
 
 
 
-                    )
+                                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
 
 
-                    .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                            
 
 
 
-                
+                            return http.build();
 
 
 
-                return http.build();
+                        }
 
 
 
-            }
+                    
 
 
 
-        
+                        @Bean
 
 
 
-    
+                        public CorsConfigurationSource corsConfigurationSource() {
 
 
 
-            @Bean
+                            CorsConfiguration configuration = new CorsConfiguration();
 
 
 
-    
+                            
 
 
 
-            public CorsConfigurationSource corsConfigurationSource() {
+                            // Permissive CORS for troubleshooting
 
 
 
-    
+                            configuration.setAllowedOriginPatterns(List.of("*"));
 
 
 
-                CorsConfiguration configuration = new CorsConfiguration();
+                            configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
 
 
 
-    
+                            configuration.setAllowedHeaders(Arrays.asList("*"));
 
 
 
-                
+                            configuration.setExposedHeaders(List.of("Authorization"));
 
 
 
-    
+                            configuration.setAllowCredentials(true);
 
 
 
-                // Pour le debug : on autorise tout temporairement
+                            configuration.setMaxAge(3600L);
 
 
 
-    
+                            
 
 
 
-                configuration.setAllowedOriginPatterns(List.of("*")); 
+                            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
 
 
-    
+                            source.registerCorsConfiguration("/**", configuration);
 
 
 
-                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+                            return source;
 
 
 
-    
+                        }
 
 
 
-                configuration.setAllowedHeaders(Arrays.asList("*"));
+                    }
 
 
 
-    
-
-
-
-                configuration.setExposedHeaders(List.of("Authorization"));
-
-
-
-    
-
-
-
-                configuration.setAllowCredentials(true);
-
-
-
-    
-
-
-
-                configuration.setMaxAge(3600L);
-
-
-
-    
-
-
-
-                
-
-
-
-    
-
-
-
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-
-
-
-    
-
-
-
-                source.registerCorsConfiguration("/**", configuration);
-
-
-
-    
-
-
-
-                return source;
-
-
-
-    
-
-
-
-            }
-
-
-
-    
-
-
-
-        
-
-
-
-    
-
-}
+                    

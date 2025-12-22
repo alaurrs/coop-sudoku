@@ -7,12 +7,11 @@ const filePath = path.join(dir, fileName);
 
 // Valeurs par défaut ou variables d'env Digital Ocean
 const apiUrl = process.env.API_URL || 'https://api.sudoku.sallyvnge.fr/api';
+// Force ws://api.sudoku.sallyvnge.fr/ws-sudoku without extra /api if the var is wrong
 let wsUrl = process.env.WS_URL || 'wss://api.sudoku.sallyvnge.fr/ws-sudoku';
 
-// S'assurer que l'URL WS commence par wss ou ws si c'est une URL absolue
-if (wsUrl.startsWith('http')) {
-  wsUrl = wsUrl.replace(/^http/, 'ws');
-}
+// Correction auto : si l'URL contient double /api/api, on nettoie
+wsUrl = wsUrl.replace('/api/api/', '/api/');
 
 const content = `export const environment = {
   production: true,
