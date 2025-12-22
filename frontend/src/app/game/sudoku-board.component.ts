@@ -198,6 +198,13 @@ import { ThemeService } from '../services/theme.service';
                          [class.!bg-rose-100/40]="!themeService.isDark() && !highlightedValue() && (hoverCell()?.r === r || hoverCell()?.c === c)"
                          [class.dark:!bg-slate-700]="!highlightedValue() && (hoverCell()?.r === r || hoverCell()?.c === c)"
                     >
+                       <!-- Other Player Cursor Overlay -->
+                       <div *ngFor="let cursor of getCursorsInCell(r, c)" 
+                            class="absolute inset-0 border-2 border-dashed border-rose-400 dark:border-rose-500 z-20 pointer-events-none animate-pulse flex items-start justify-end p-0.5">
+                          <div class="bg-rose-400 dark:bg-rose-500 text-white text-[8px] font-black px-1 rounded-sm shadow-sm">{{cursor.username}}</div>
+                       </div>
+
+                       <!-- Value -->
                        <span *ngIf="cell !== 0" 
                              class="transition-colors"
                              [class.text-white]="(selected()?.r === r && selected()?.c === c) || (!themeService.isDark() && ((r < 3 || r > 5) && (c > 2 && c < 6) || (r > 2 && r < 6) && (c < 3 || c > 5)))"
@@ -404,6 +411,11 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
   isPendingCell(r: number, c: number): boolean {
     const p = this.pending();
     return !!p && p.row === r && p.col === c;
+  }
+
+  getCursorsInCell(r: number, c: number) {
+    const cursors = Array.from(this.store.otherCursors().values());
+    return cursors.filter(cur => cur.row === r && cur.col === c);
   }
   
   reload() { this.store.resetGame(); }

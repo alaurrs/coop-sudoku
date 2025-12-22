@@ -25,6 +25,7 @@ export interface GameState {
   completedTime: number | null;
   difficulty: string;
   activeLobbies: GameSummary[];
+  otherCursors: Map<string, {row: number, col: number, username: string}>;
 }
 
 const INITIAL_STATE: GameState = {
@@ -44,7 +45,8 @@ const INITIAL_STATE: GameState = {
   startTime: 0,
   completedTime: null,
   difficulty: 'MEDIUM',
-  activeLobbies: []
+  activeLobbies: [],
+  otherCursors: new Map()
 };
 
 @Injectable({
@@ -77,6 +79,7 @@ export class GameStore {
   readonly completedTime = computed(() => this.state().completedTime);
   readonly difficulty = computed(() => this.state().difficulty);
   readonly activeLobbies = computed(() => this.state().activeLobbies);
+  readonly otherCursors = computed(() => this.state().otherCursors);
   
   readonly isMyTurnToConfirm = computed(() => {
     const sugg = this.state().pendingSuggestion;
@@ -127,7 +130,8 @@ export class GameStore {
       completedTime: session.completedTime,
       difficulty: session.difficulty,
       pendingSuggestion: null,
-      chatMessages: []
+      chatMessages: [],
+      otherCursors: new Map()
     }));
 
     this.router.navigate(['/game']);
@@ -160,14 +164,44 @@ export class GameStore {
            ...s,
            status: 'COMPLETED',
            endReason: 'SURRENDERED',
-           completedTime: Date.now() // Set local completed time for real-time surrender
+           completedTime: Date.now()
         }));
+        break;
+      case 'CURSOR_MOVE':
+        this.handleCursorMove(event.payload);
         break;
     }
   }
 
+  private handleCursorMove(payload: any) {
+    if (payload.userId === this.state().currentUserId) return;
+    
+    this.state.update(s => {
+      const newCursors = new Map(s.otherCursors);
+      newCursors.set(payload.userId, { 
+        row: payload.row, 
+        col: payload.col, 
+        username: payload.username 
+      });
+      return { ...s, otherCursors: newCursors };
+    });
+  }
+
+  sendCursorPosition(row: number, col: number) {
+    const s = this.state();
+    if (!s.roomId || !s.currentUserId) return;
+    
+    this.ws.send(`/app/game/${s.roomId}/cursor`, {
+      userId: s.currentUserId,
+      username: s.currentUsername,
+      row,
+      col
+    });
+  }
+
   selectCell(r: number, c: number) {
     this.state.update(s => ({ ...s, selectedCell: { r, c } }));
+    this.sendCursorPosition(r, c);
   }
 
   makeSuggestion(value: number) {
@@ -255,7 +289,7 @@ export class GameStore {
         mistakes: !result.isCorrect ? s.mistakes + 1 : s.mistakes,
         lastMoveStatus: result.isCorrect ? 'CORRECT' : 'INCORRECT',
         endReason: result.isWin ? 'SOLVED' : s.endReason,
-        completedTime: result.isWin ? Date.now() : s.completedTime // Set local completed time for real-time win
+        completedTime: result.isWin ? Date.now() : s.completedTime
       };
     });
     

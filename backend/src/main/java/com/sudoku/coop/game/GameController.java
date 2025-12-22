@@ -68,15 +68,22 @@ public class GameController {
     }
 
     // Client sends to: /app/game/{roomId}/confirm
-    @MessageMapping("/game/{roomId}/confirm")
-    public void confirm(@DestinationVariable String roomId, @Payload ConfirmationRequest req) {
-        socialService.updateActivity(req.userId());
-        gameService.confirmMove(roomId, req.userId(), req.accepted());
-    }
-
-            @MessageMapping("/game/{roomId}/chat")
-
-            public void chat(@DestinationVariable String roomId, @Payload ChatRequest req) {
+        @MessageMapping("/game/{roomId}/confirm")
+        public void confirm(@DestinationVariable String roomId, @Payload ConfirmationRequest req) {
+            socialService.updateActivity(req.userId());
+            gameService.confirmMove(roomId, req.userId(), req.accepted());
+        }
+    
+        @MessageMapping("/game/{roomId}/cursor")
+        public void cursor(@DestinationVariable String roomId, @Payload CursorPosition req) {
+            // Broadcast directly to topic to avoid unnecessary DB calls for cursor tracking
+            messagingTemplate.convertAndSend("/topic/game/" + roomId, 
+                new GameEvent("CURSOR_MOVE", req)
+            );
+        }
+    
+        @MessageMapping("/game/{roomId}/chat")
+                public void chat(@DestinationVariable String roomId, @Payload ChatRequest req) {
 
                 String username = socialService.findUsernameById(req.userId());
 
