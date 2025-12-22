@@ -190,6 +190,12 @@ import { ThemeService } from '../services/theme.service';
                          [class.dark:bg-slate-800]="themeService.isDark() && ((r < 3 || r > 5) && (c > 2 && c < 6) || (r > 2 && r < 6) && (c < 3 || c > 5))"
                          [class.!bg-blue-500]="selected()?.r === r && selected()?.c === c"
                          [class.!text-white]="selected()?.r === r && selected()?.c === c"
+                         [class.!bg-blue-100]="!themeService.isDark() && highlightedValue() && cell === highlightedValue() && (selected()?.r !== r || selected()?.c !== c)"
+                         [class.dark:!bg-blue-900/50]="themeService.isDark() && highlightedValue() && cell === highlightedValue() && (selected()?.r !== r || selected()?.c !== c)"
+                         [class.ring-2]="highlightedValue() && cell === highlightedValue() && (selected()?.r !== r || selected()?.c !== c)"
+                         [class.ring-inset]="highlightedValue() && cell === highlightedValue()"
+                         [class.ring-blue-400]="highlightedValue() && cell === highlightedValue() && (selected()?.r !== r || selected()?.c !== c)"
+                         [class.!bg-rose-100/40]="!themeService.isDark() && !highlightedValue() && (hoverCell()?.r === r || hoverCell()?.c === c)"
                          [class.dark:!bg-slate-700]="!highlightedValue() && (hoverCell()?.r === r || hoverCell()?.c === c)"
                     >
                        <span *ngIf="cell !== 0" 
