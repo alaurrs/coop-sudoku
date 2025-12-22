@@ -227,12 +227,15 @@ import { ThemeService } from '../services/theme.service';
                     </button>
                  </div>
 
-                 <div *ngIf="!pending()" class="flex-1 flex justify-center gap-1.5 md:gap-3 overflow-x-auto pb-1 scrollbar-hide">
-                    <button *ngFor="let num of [1,2,3,4,5,6,7,8,9]" 
-                            (click)="onNumberInput(num)"
-                            class="size-9 md:size-12 min-w-[2.2rem] md:min-w-[3rem] rounded-lg md:rounded-2xl bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 hover:border-blue-500 text-slate-700 dark:text-slate-300 font-black text-lg md:text-xl transition-all flex items-center justify-center shadow-sm active:scale-90">
-                       {{num}}
-                    </button>
+                 <!-- Numpad (If Playing) -->
+                 <div *ngIf="!pending()" class="flex-1 overflow-x-auto pb-1 scrollbar-hide px-2">
+                    <div class="flex gap-1.5 md:gap-3 mx-auto w-max min-w-full justify-center md:justify-center">
+                        <button *ngFor="let num of [1,2,3,4,5,6,7,8,9]" 
+                                (click)="onNumberInput(num)"
+                                class="size-9 md:size-12 min-w-[2.2rem] md:min-w-[3rem] rounded-lg md:rounded-2xl bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 hover:border-blue-500 text-slate-700 dark:text-slate-300 font-black text-lg md:text-xl transition-all flex items-center justify-center shadow-sm active:scale-90 flex-shrink-0">
+                           {{num}}
+                        </button>
+                    </div>
                  </div>
 
                  <div *ngIf="isMyConfirm()" class="flex gap-2 md:gap-4 animate-in slide-in-from-bottom-4 fade-in duration-300">
