@@ -276,9 +276,12 @@ export class GameStore {
   }
 
   private handleMoveConfirmed(result: any) {
+    console.log('Move Confirmed Payload:', result);
+    const isCorrect = result.isCorrect !== undefined ? result.isCorrect : result.correct;
+    
     this.state.update(s => {
       const newGrid = s.grid.map((row: number[]) => [...row]);
-      if (result.isCorrect) {
+      if (isCorrect) {
         newGrid[result.row][result.col] = result.value;
       }
       return {
@@ -286,8 +289,8 @@ export class GameStore {
         grid: newGrid,
         pendingSuggestion: null,
         status: result.isWin ? 'COMPLETED' : s.status,
-        mistakes: !result.isCorrect ? s.mistakes + 1 : s.mistakes,
-        lastMoveStatus: result.isCorrect ? 'CORRECT' : 'INCORRECT',
+        mistakes: !isCorrect ? s.mistakes + 1 : s.mistakes,
+        lastMoveStatus: isCorrect ? 'CORRECT' : 'INCORRECT',
         endReason: result.isWin ? 'SOLVED' : s.endReason,
         completedTime: result.isWin ? Date.now() : s.completedTime
       };
