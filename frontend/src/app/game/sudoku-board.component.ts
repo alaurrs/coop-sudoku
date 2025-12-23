@@ -44,6 +44,19 @@ import { ThemeService } from '../services/theme.service';
          </div>
       </div>
 
+      <!-- Toast Notification -->
+      <div *ngIf="store.lastMoveStatus()" class="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-4 fade-in duration-300 pointer-events-none">
+        <div [class]="store.lastMoveStatus() === 'CORRECT' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'"
+             class="px-6 py-3 rounded-2xl shadow-xl flex items-center gap-3 font-black uppercase tracking-wider text-xs md:text-sm border-2 border-white/20">
+            <span class="material-symbols-outlined text-xl md:text-2xl">
+                {{ store.lastMoveStatus() === 'CORRECT' ? 'check_circle' : 'cancel' }}
+            </span>
+            <span>
+                {{ store.lastMoveStatus() === 'CORRECT' ? 'Excellent Move!' : 'Oops! Incorrect' }}
+            </span>
+        </div>
+      </div>
+
       <!-- Header -->
       <header class="h-16 border-b border-pink-200 dark:border-slate-800 bg-[#fff0f5]/90 dark:bg-[#0f172a]/95 flex items-center justify-between px-4 md:px-6 shrink-0 z-30 backdrop-blur transition-colors duration-300 shadow-sm">
         <div class="flex items-center gap-3 md:gap-4 w-1/4 relative group">

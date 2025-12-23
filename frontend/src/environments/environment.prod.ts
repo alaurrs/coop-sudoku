@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: '/api',
-  wsUrl: '/ws-sudoku'
+  apiUrl: 'https://api.sudoku.sallyvnge.fr/api',
+  wsUrl: 'wss://api.sudoku.sallyvnge.fr/ws-sudoku'
 };
