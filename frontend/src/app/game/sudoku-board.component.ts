@@ -349,6 +349,7 @@ import { ThemeService } from '../services/theme.service';
 export class SudokuBoardComponent implements OnInit, OnDestroy {
   readonly store = inject(GameStore);
   public themeService = inject(ThemeService);
+  protected Math = Math;
   
   isStatsOpen = signal(false);
   isChatOpen = signal(false);
@@ -377,7 +378,6 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
     return this.getNotesInCell(sel.r, sel.c);
   });
 
-  
   ngOnInit() { 
     if (this.store.status() === 'COMPLETED') {
         this.updateTime();
@@ -443,6 +443,7 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
       return this.notes().get(key) || [];
   }
 
+  sendChat() {
     if (this.chatInput.trim()) {
         this.store.sendMessage(this.chatInput);
         this.chatInput = '';
