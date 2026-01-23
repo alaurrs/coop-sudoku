@@ -14,10 +14,11 @@ public class GameSession {
     private long startTime;
     private Long completedTime;
     private String difficulty;
+    private java.util.Map<String, List<Integer>> notes;
 
     public record PlayerInfo(String id, String username, String avatar) {}
 
-    public GameSession(String roomId, int[][] currentGrid, int[][] solution, PlayerInfo host, GameState state, long startTime, Long completedTime, String difficulty) {
+    public GameSession(String roomId, int[][] currentGrid, int[][] solution, PlayerInfo host, GameState state, long startTime, Long completedTime, String difficulty, java.util.Map<String, List<Integer>> notes) {
         this.roomId = roomId;
         this.currentGrid = currentGrid;
         this.solution = solution;
@@ -26,7 +27,13 @@ public class GameSession {
         this.completedTime = completedTime;
         this.difficulty = difficulty;
         this.players.add(host);
+        this.notes = notes;
     }
+
+    public GameSession(String roomId, int[][] currentGrid, int[][] solution, PlayerInfo host, GameState state, long startTime, Long completedTime, String difficulty) {
+        this(roomId, currentGrid, solution, host, state, startTime, completedTime, difficulty, new java.util.HashMap<>());
+    }
+
 
     public void addPlayer(PlayerInfo player) {
         if (players.stream().noneMatch(p -> p.id().equals(player.id()))) {
@@ -50,4 +57,5 @@ public class GameSession {
     public long getStartTime() { return startTime; }
     public Long getCompletedTime() { return completedTime; }
     public String getDifficulty() { return difficulty; }
+    public java.util.Map<String, List<Integer>> getNotes() { return notes; }
 }

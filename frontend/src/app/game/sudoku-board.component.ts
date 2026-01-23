@@ -182,33 +182,49 @@ import { ThemeService } from '../services/theme.service';
               <div class="grid grid-cols-9 gap-px bg-pink-200 dark:bg-slate-500 border-[4px] md:border-[6px] border-pink-300 dark:border-slate-700 rounded-xl shadow-2xl select-none relative overflow-hidden transition-colors duration-300 mx-auto">
                  
                  <ng-container *ngFor="let row of grid(); let r = index">
-                    <div *ngFor="let cell of row; let c = index"
-                         (click)="onCellClick(r, c)"
-                         (mouseenter)="hoverCell.set({r, c})"
-                         class="size-9 sm:size-12 md:size-16 flex items-center justify-center text-lg sm:text-2xl md:text-3xl font-black cursor-pointer transition-all duration-150 relative"
-                         [class.bg-[#fff0f5]]="!themeService.isDark() && !((r < 3 || r > 5) && (c > 2 && c < 6) || (r > 2 && r < 6) && (c < 3 || c > 5))"
-                         [class.bg-pink-100]="!themeService.isDark() && ((r < 3 || r > 5) && (c > 2 && c < 6) || (r > 2 && r < 6) && (c < 3 || c > 5))"
-                         [class.dark:bg-[#0f172a]]="themeService.isDark() && !((r < 3 || r > 5) && (c > 2 && c < 6) || (r > 2 && r < 6) && (c < 3 || c > 5))"
-                         [class.dark:bg-slate-800]="themeService.isDark() && ((r < 3 || r > 5) && (c > 2 && c < 6) || (r > 2 && r < 6) && (c < 3 || c > 5))"
-                         [class.!bg-[#3b82f6]]="selected()?.r === r && selected()?.c === c"
-                         [class.!text-white]="selected()?.r === r && selected()?.c === c"
-                         [class.!bg-blue-100]="!themeService.isDark() && highlightedValue() && cell === highlightedValue() && (selected()?.r !== r || selected()?.c !== c)"
-                         [class.dark:!bg-blue-900/50]="themeService.isDark() && highlightedValue() && cell === highlightedValue() && (selected()?.r !== r || selected()?.c !== c)"
-                         [class.ring-2]="highlightedValue() && cell === highlightedValue() && (selected()?.r !== r || selected()?.c !== c)"
-                         [class.ring-inset]="highlightedValue() && cell === highlightedValue()"
-                         [class.ring-[#3b82f6]]="highlightedValue() && cell === highlightedValue() && (selected()?.r !== r || selected()?.c !== c)"
-                    >
+                     <div *ngFor="let cell of row; let c = index"
+                          (click)="onCellClick(r, c)"
+                          (mouseenter)="hoverCell.set({r, c})"
+                          class="size-9 sm:size-12 md:size-16 flex items-center justify-center text-lg sm:text-2xl md:text-3xl font-black cursor-pointer transition-all duration-150 relative"
+                          [class.bg-[#fff0f5]]="!themeService.isDark() && !((r < 3 || r > 5) && (c > 2 && c < 6) || (r > 2 && r < 6) && (c < 3 || c > 5))"
+                          [class.bg-pink-100]="!themeService.isDark() && ((r < 3 || r > 5) && (c > 2 && c < 6) || (r > 2 && r < 6) && (c < 3 || c > 5))"
+                          [class.dark:bg-[#0f172a]]="themeService.isDark() && !((r < 3 || r > 5) && (c > 2 && c < 6) || (r > 2 && r < 6) && (c < 3 || c > 5))"
+                          [class.dark:bg-slate-800]="themeService.isDark() && ((r < 3 || r > 5) && (c > 2 && c < 6) || (r > 2 && r < 6) && (c < 3 || c > 5))"
+                          
+                          [class.!bg-blue-100]="!themeService.isDark() && (selected()?.r === r || selected()?.c === c || (Math.floor(selected()!.r / 3) === Math.floor(r / 3) && Math.floor(selected()!.c / 3) === Math.floor(c / 3))) && !(selected()?.r === r && selected()?.c === c)"
+                          [class.dark:!bg-slate-700]="themeService.isDark() && (selected()?.r === r || selected()?.c === c || (Math.floor(selected()!.r / 3) === Math.floor(r / 3) && Math.floor(selected()!.c / 3) === Math.floor(c / 3))) && !(selected()?.r === r && selected()?.c === c)"
+
+                          [class.!bg-[#3b82f6]]="selected()?.r === r && selected()?.c === c"
+                          [class.!text-white]="selected()?.r === r && selected()?.c === c"
+                          [class.!bg-blue-200]="!themeService.isDark() && highlightedValue() && cell === highlightedValue() && (selected()?.r !== r || selected()?.c !== c)"
+                          [class.dark:!bg-blue-900]="themeService.isDark() && highlightedValue() && cell === highlightedValue() && (selected()?.r !== r || selected()?.c !== c)"
+                          [class.ring-2]="highlightedValue() && cell === highlightedValue() && (selected()?.r !== r || selected()?.c !== c)"
+                          [class.ring-inset]="highlightedValue() && cell === highlightedValue()"
+                          [class.ring-[#3b82f6]]="highlightedValue() && cell === highlightedValue() && (selected()?.r !== r || selected()?.c !== c)"
+                     >
+
                        <div *ngFor="let cursor of getCursorsInCell(r, c)" 
                             class="absolute inset-0 border-2 border-dashed border-[#f43f5e] dark:border-blue-500 z-20 pointer-events-none animate-pulse flex items-start justify-end p-0.5">
                           <div class="bg-[#f43f5e] dark:bg-blue-500 text-white text-[8px] font-black px-1 rounded-sm shadow-sm">{{cursor.username}}</div>
                        </div>
 
-                       <span *ngIf="cell !== 0" 
-                             class="transition-colors"
-                             [class.text-[#881337]]="!themeService.isDark() && !(selected()?.r === r && selected()?.c === c)"
-                             [class.dark:text-blue-200]="themeService.isDark() && !(selected()?.r === r && selected()?.c === c)">{{ cell }}</span>
+                        <span *ngIf="cell !== 0" 
+                              class="transition-colors"
+                              [class.text-[#881337]]="!themeService.isDark() && !(selected()?.r === r && selected()?.c === c)"
+                              [class.dark:text-blue-200]="themeService.isDark() && !(selected()?.r === r && selected()?.c === c)">{{ cell }}</span>
 
-                       <ng-container *ngIf="cell === 0 && isPendingCell(r, c)">
+                        <!-- Notes Layer -->
+                        <div *ngIf="cell === 0 && !isPendingCell(r, c) && getNotesInCell(r, c).length > 0" 
+                             class="absolute inset-0 grid grid-cols-3 grid-rows-3 p-0.5 pointer-events-none">
+                            <div *ngFor="let n of [1,2,3,4,5,6,7,8,9]" class="flex items-center justify-center leading-none">
+                                <span *ngIf="getNotesInCell(r, c).includes(n)" 
+                                      class="text-[8px] sm:text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400">
+                                    {{n}}
+                                </span>
+                            </div>
+                        </div>
+
+                        <ng-container *ngIf="cell === 0 && isPendingCell(r, c)">
                           <div class="absolute inset-0 flex items-center justify-center z-10 bg-[#3b82f6] shadow-inner">
                              <span class="text-white font-black text-xl md:text-3xl animate-pulse">{{ pending()?.value }}</span>
                           </div>
@@ -229,14 +245,37 @@ import { ThemeService } from '../services/theme.service';
               <div class="w-full flex items-center justify-between gap-4 p-4 md:p-6 rounded-[2rem] bg-[#fff0f5]/80 dark:bg-[#1e293b]/80 border border-pink-100 dark:border-slate-800 shadow-xl backdrop-blur transition-colors">
                  <div class="flex items-center gap-2 md:gap-3 shrink-0">
                     <button class="size-10 md:size-14 rounded-xl md:rounded-2xl bg-white dark:bg-slate-800 text-pink-300 border border-pink-50 flex items-center justify-center shadow-sm"><span class="material-symbols-outlined">undo</span></button>
-                    <button class="size-10 md:size-14 rounded-xl md:rounded-2xl bg-[#3b82f6] text-white shadow-lg flex items-center justify-center active:scale-95"><span class="material-symbols-outlined filled">edit</span></button>
+                    <button (click)="toggleNoteMode()" 
+                            class="size-10 md:size-14 rounded-xl md:rounded-2xl shadow-lg flex items-center justify-center active:scale-95 transition-all relative border-2"
+                            [class.bg-[#f43f5e]]="isNoteMode()"
+                            [class.text-white]="isNoteMode()"
+                            [class.border-[#f43f5e]]="isNoteMode()"
+                            [class.bg-white]="!isNoteMode()"
+                            [class.dark:bg-slate-800]="!isNoteMode()"
+                            [class.text-slate-500]="!isNoteMode()"
+                            [class.border-transparent]="!isNoteMode()">
+                       <span class="material-symbols-outlined filled">edit</span>
+                       <div *ngIf="isNoteMode()" class="absolute -top-1 -right-1 size-3 bg-white rounded-full border-2 border-[#f43f5e]"></div>
+                    </button>
                  </div>
 
                  <div *ngIf="!pending()" class="flex-1 overflow-x-auto pb-1 scrollbar-hide px-2">
                     <div class="flex gap-1.5 md:gap-3 mx-auto w-max min-w-full justify-center">
                         <button *ngFor="let num of [1,2,3,4,5,6,7,8,9]" 
                                 (click)="onNumberInput(num)"
-                                class="size-9 md:size-12 min-w-[2.2rem] md:min-w-[3rem] rounded-lg md:rounded-2xl bg-white dark:bg-slate-800 border-2 border-pink-50 dark:border-slate-700 hover:border-[#3b82f6] text-[#881337] dark:text-slate-300 font-black text-lg md:text-xl transition-all flex items-center justify-center shadow-sm active:scale-90 flex-shrink-0">
+                                class="size-9 md:size-12 min-w-[2.2rem] md:min-w-[3rem] rounded-lg md:rounded-2xl border-2 hover:border-[#3b82f6] font-black text-lg md:text-xl transition-all flex items-center justify-center shadow-sm active:scale-90 flex-shrink-0"
+                                [class.bg-slate-100]="isNoteMode() && notesInSelected().includes(num)"
+                                [class.dark:bg-slate-700]="isNoteMode() && notesInSelected().includes(num)"
+                                [class.text-slate-900]="isNoteMode()"
+                                [class.dark:text-slate-300]="isNoteMode()"
+                                [class.bg-white]="!isNoteMode()"
+                                [class.dark:bg-slate-800]="!isNoteMode()"
+                                [class.text-[#881337]]="!isNoteMode()"
+                                [class.dark:text-slate-300]="!isNoteMode()"
+                                [class.border-pink-50]="!isNoteMode()"
+                                [class.dark:border-slate-700]="!isNoteMode()"
+                                [class.border-slate-400]="isNoteMode()"
+                                >
                            {{num}}
                         </button>
                     </div>
@@ -313,6 +352,7 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
   
   isStatsOpen = signal(false);
   isChatOpen = signal(false);
+  isNoteMode = signal(false);
   hoverCell = signal<{r: number, c: number} | null>(null);
   chatInput = '';
   elapsedTime = signal('00:00');
@@ -322,6 +362,7 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
   readonly selected = this.store.selectedCell;
   readonly pending = this.store.pendingSuggestion;
   readonly isMyConfirm = this.store.isMyTurnToConfirm;
+  readonly notes = this.store.notes;
 
   readonly highlightedValue = computed(() => {
     const sel = this.selected();
@@ -329,6 +370,13 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
     const val = this.grid()[sel.r][sel.c];
     return val !== 0 ? val : null;
   });
+  
+  readonly notesInSelected = computed(() => {
+    const sel = this.selected();
+    if (!sel) return [];
+    return this.getNotesInCell(sel.r, sel.c);
+  });
+
   
   ngOnInit() { 
     if (this.store.status() === 'COMPLETED') {
@@ -374,10 +422,27 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
   }
 
   onCellClick(r: number, c: number) { this.store.selectCell(r, c); }
-  onNumberInput(num: number) { this.store.makeSuggestion(num); }
+  
+  onNumberInput(num: number) { 
+      if (this.isNoteMode()) {
+          const sel = this.selected();
+          if (sel) this.store.toggleNote(sel.r, sel.c, num);
+      } else {
+          this.store.makeSuggestion(num); 
+      }
+  }
+
   onConfirm(accepted: boolean) { this.store.confirmSuggestion(accepted); }
   
-  sendChat() {
+  toggleNoteMode() {
+      this.isNoteMode.set(!this.isNoteMode());
+  }
+
+  getNotesInCell(r: number, c: number): number[] {
+      const key = `${r}-${c}`;
+      return this.notes().get(key) || [];
+  }
+
     if (this.chatInput.trim()) {
         this.store.sendMessage(this.chatInput);
         this.chatInput = '';
@@ -398,10 +463,45 @@ export class SudokuBoardComponent implements OnInit, OnDestroy {
   
   @HostListener('window:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
+    if (document.activeElement?.tagName === 'INPUT') return;
+
+    // Numbers
     const num = parseInt(event.key);
     if (!isNaN(num) && num >= 1 && num <= 9) {
-      if (document.activeElement?.tagName === 'INPUT') return;
       this.onNumberInput(num);
+      return;
     }
+    
+    // Movement
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        event.preventDefault();
+        this.handleArrows(event.key);
+        return;
+    }
+    
+    // Actions
+    if (event.key.toLowerCase() === 'n') {
+        this.toggleNoteMode();
+    }
+    if (event.key === 'Backspace' || event.key === 'Delete') {
+        // Maybe implement clear cell logic later?
+    }
+  }
+
+  handleArrows(key: string) {
+      const sel = this.selected();
+      if (!sel) return;
+      
+      let r = sel.r;
+      let c = sel.c;
+      
+      switch(key) {
+          case 'ArrowUp': r = Math.max(0, r - 1); break;
+          case 'ArrowDown': r = Math.min(8, r + 1); break;
+          case 'ArrowLeft': c = Math.max(0, c - 1); break;
+          case 'ArrowRight': c = Math.min(8, c + 1); break;
+      }
+      
+      this.store.selectCell(r, c);
   }
 }

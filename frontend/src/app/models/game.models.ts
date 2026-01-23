@@ -7,6 +7,7 @@ export interface GameSession {
   startTime: number;
   completedTime: number | null;
   difficulty: string;
+  notes: { [key: string]: number[] }; // Key is "row-col", value is array of notes
 }
 
 export interface PlayerInfo {

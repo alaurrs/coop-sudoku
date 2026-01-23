@@ -22,6 +22,8 @@ public class GameService {
     private final SocialService socialService;
     
     private final Map<String, Suggestion> activeSuggestions = new ConcurrentHashMap<>();
+    // RoomCode -> "Row-Col" -> Set<Integer>
+    private final Map<String, Map<String, java.util.Set<Integer>>> activeNotes = new ConcurrentHashMap<>();
 
     public GameService(SudokuGenerator generator, SimpMessagingTemplate messagingTemplate, 
                        GameRepository gameRepository, UserRepository userRepository,
@@ -127,6 +129,26 @@ public class GameService {
         }
     }
 
+    public void toggleNote(String roomCode, String userId, int row, int col, int value) {
+        activeNotes.computeIfAbsent(roomCode, k -> new ConcurrentHashMap<>());
+        var roomNotes = activeNotes.get(roomCode);
+        String key = row + "-" + col;
+        
+        roomNotes.computeIfAbsent(key, k -> ConcurrentHashMap.newKeySet());
+        var cellNotes = roomNotes.get(key);
+        
+        if (cellNotes.contains(value)) {
+            cellNotes.remove(value);
+        } else {
+            cellNotes.add(value);
+        }
+        
+        // Broadcast update
+        broadcast(roomCode, "NOTE_UPDATE", new NoteUpdate(row, col, new java.util.ArrayList<>(cellNotes)));
+    }
+    
+    public record NoteUpdate(int row, int col, List<Integer> notes) {}
+
     public void confirmMove(String roomCode, String userId, boolean accepted) {
         var suggestion = activeSuggestions.get(roomCode);
         if (suggestion == null) return;
@@ -172,6 +194,13 @@ public class GameService {
         
         gameRepository.save(entity);
         activeSuggestions.remove(entity.getRoomCode());
+        
+        // Clear notes for this cell upon move confirmation
+        if (activeNotes.containsKey(entity.getRoomCode())) {
+            String key = row + "-" + col;
+            activeNotes.get(entity.getRoomCode()).remove(key);
+            broadcast(entity.getRoomCode(), "NOTE_UPDATE", new NoteUpdate(row, col, java.util.Collections.emptyList()));
+        }
 
         var update = new MoveResult(
             row, col, value, isCorrect, 
@@ -187,6 +216,12 @@ public class GameService {
             resolveUsername(entity.getHostId()),
             resolveAvatar(entity.getHostId())
         );
+        
+        // Convert Set to List for frontend
+        Map<String, List<Integer>> notes = new java.util.HashMap<>();
+        if (activeNotes.containsKey(entity.getRoomCode())) {
+            activeNotes.get(entity.getRoomCode()).forEach((k, v) -> notes.put(k, new java.util.ArrayList<>(v)));
+        }
             
         GameSession session = new GameSession(
             entity.getRoomCode(),
@@ -196,7 +231,8 @@ public class GameService {
             entity.getState(),
             entity.getCreatedAt().toEpochMilli(),
             entity.getCompletedAt() != null ? entity.getCompletedAt().toEpochMilli() : null,
-            entity.getDifficulty()
+            entity.getDifficulty(),
+            notes
         );
         
         if (entity.getPlayer2Id() != null) {

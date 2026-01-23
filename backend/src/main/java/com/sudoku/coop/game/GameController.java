@@ -67,6 +67,12 @@ public class GameController {
         gameService.suggestMove(roomId, req.userId(), req.row(), req.col(), req.value());
     }
 
+    @MessageMapping("/game/{roomId}/note")
+    public void toggleNote(@DestinationVariable String roomId, @Payload NoteRequest req) {
+        socialService.updateActivity(req.userId());
+        gameService.toggleNote(roomId, req.userId(), req.row(), req.col(), req.value());
+    }
+
     // Client sends to: /app/game/{roomId}/confirm
         @MessageMapping("/game/{roomId}/confirm")
         public void confirm(@DestinationVariable String roomId, @Payload ConfirmationRequest req) {

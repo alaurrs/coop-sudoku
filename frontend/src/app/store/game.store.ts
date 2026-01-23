@@ -26,6 +26,7 @@ export interface GameState {
   difficulty: string;
   activeLobbies: GameSummary[];
   otherCursors: Map<string, {row: number, col: number, username: string}>;
+  notes: Map<string, number[]>; // Key: "r-c"
 }
 
 const INITIAL_STATE: GameState = {
@@ -46,7 +47,8 @@ const INITIAL_STATE: GameState = {
   completedTime: null,
   difficulty: 'MEDIUM',
   activeLobbies: [],
-  otherCursors: new Map()
+  otherCursors: new Map(),
+  notes: new Map()
 };
 
 @Injectable({
@@ -80,6 +82,7 @@ export class GameStore {
   readonly difficulty = computed(() => this.state().difficulty);
   readonly activeLobbies = computed(() => this.state().activeLobbies);
   readonly otherCursors = computed(() => this.state().otherCursors);
+  readonly notes = computed(() => this.state().notes);
   
   readonly isMyTurnToConfirm = computed(() => {
     const sugg = this.state().pendingSuggestion;
@@ -131,7 +134,8 @@ export class GameStore {
       difficulty: session.difficulty,
       pendingSuggestion: null,
       chatMessages: [],
-      otherCursors: new Map()
+      otherCursors: new Map(),
+      notes: new Map(Object.entries(session.notes || {}))
     }));
 
     this.router.navigate(['/game']);
@@ -170,7 +174,23 @@ export class GameStore {
       case 'CURSOR_MOVE':
         this.handleCursorMove(event.payload);
         break;
+      case 'NOTE_UPDATE':
+        this.handleNoteUpdate(event.payload);
+        break;
     }
+  }
+
+  private handleNoteUpdate(payload: any) {
+    this.state.update(s => {
+      const newNotes = new Map(s.notes);
+      const key = `${payload.row}-${payload.col}`;
+      if (payload.notes && payload.notes.length > 0) {
+          newNotes.set(key, payload.notes);
+      } else {
+          newNotes.delete(key);
+      }
+      return { ...s, notes: newNotes };
+    });
   }
 
   private handleCursorMove(payload: any) {
@@ -226,6 +246,16 @@ export class GameStore {
     this.ws.send(`/app/game/${s.roomId}/confirm`, {
       userId: s.currentUserId,
       accepted
+    });
+  }
+
+  toggleNote(row: number, col: number, value: number) {
+    const s = this.state();
+    if (!s.roomId || !s.currentUserId) return;
+    
+    this.ws.send(`/app/game/${s.roomId}/note`, {
+      userId: s.currentUserId,
+      row, col, value
     });
   }
 
